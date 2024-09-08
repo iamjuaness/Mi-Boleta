@@ -20,7 +20,8 @@
 		<module>microservicio-eureka</module>
 		<module>microservicio-config</module>
 		<module>microservicio-gateway</module>
-		<module>mcsvAuth</module>
+		<module>microservice-auth</module>
+		<module>microservice-manage-user</module>
 	</modules>
 
 

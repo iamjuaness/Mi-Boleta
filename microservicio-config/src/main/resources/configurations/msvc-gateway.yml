@@ -7,7 +7,7 @@ server:
 
 spring:
   application:
-    name: mcsv-gateway
+    name: msvc-gateway
   cloud:
     gateway:
       discovery:

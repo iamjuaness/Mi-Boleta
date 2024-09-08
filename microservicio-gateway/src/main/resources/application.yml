@@ -1,5 +1,5 @@
 spring:
   application:
-    name: mcsv-gateway
+    name: msvc-gateway
   config:
     import: optional:configserver:http://localhost:8888
