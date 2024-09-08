@@ -1,15 +1,5 @@
-server:
-  port: 8081
-
 spring:
   application:
     name: msvc-auth
   config:
     import: optional:configserver:http://localhost:8888
-
-eureka:
-  instance:
-    hostname: localhost
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka
