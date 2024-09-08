@@ -1,9 +1,9 @@
 server:
-  port: 8090
+  port: 8081
 
 spring:
   application:
-    name: msvc-Auth
+    name: msvc-auth
   config:
     import: optional:configserver:http://localhost:8888
 
