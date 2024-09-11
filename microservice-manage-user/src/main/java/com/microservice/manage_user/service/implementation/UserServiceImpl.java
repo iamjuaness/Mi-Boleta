@@ -1,9 +1,8 @@
 package com.microservice.manage_user.service.implementation;
 
-import com.microservice.manage_user.presentation.dto.AddToCartDTO;
-import com.microservice.manage_user.presentation.dto.LoginClientDTO;
-import com.microservice.manage_user.presentation.dto.RegisterClientDTO;
-import com.microservice.manage_user.presentation.dto.UpdateUserDTO;
+import com.microservice.manage_user.persistence.model.enums.State;
+import com.microservice.manage_user.presentation.advice.ResourceNotFoundException;
+import com.microservice.manage_user.presentation.dto.*;
 import com.microservice.manage_user.persistence.model.entities.User;
 import com.microservice.manage_user.persistence.repository.UserRepository;
 import com.microservice.manage_user.service.interfaces.UserService;
@@ -34,37 +33,45 @@ public class UserServiceImpl implements UserService{
 
     /**
      * -This method allows you to create a user on the platform.
-     * @param registerClientDTO
-     * @return
-     * @throws ErrorResponseException
+     *
+     * @param registerClientDTO DTO with the information required for registration
+     * @return User
+     * @throws IllegalStateException
      */
     @Override
-    public User signUp(RegisterClientDTO registerClientDTO) throws IllegalStateException {
+    public State signUp(RegisterClientDTO registerClientDTO) throws IllegalStateException {
 
-        if(appUtil.checkEmail(registerClientDTO.emailAddress())){
-            throw new IllegalStateException("Mail " + registerClientDTO.emailAddress() + " is already in use");
+        try{
+            if(appUtil.checkEmail(registerClientDTO.emailAddress())){
+                throw new IllegalStateException("Mail " + registerClientDTO.emailAddress() + " is already in use");
+            }
+
+            if(appUtil.checkIdUser(registerClientDTO.idUser())){
+                throw new DuplicateKeyException("IdUser " + registerClientDTO.idUser() + " is already in use");
+            }
+
+            String passwordEncode = passwordEncoder.encode(registerClientDTO.password());
+
+            User user = userMapper.dtoRegisterToEntity(registerClientDTO, passwordEncode);
+
+            userRepository.save(user);
+
+            return State.SUCCESS;
+
+        } catch (Exception e){
+            return State.ERROR;
         }
-
-        if(appUtil.checkIdUser(registerClientDTO.idUser())){
-            throw new DuplicateKeyException("IdUser " + registerClientDTO.idUser() + " is already in use");
-        }
-
-        String passwordEncode = passwordEncoder.encode(registerClientDTO.password());
-
-        User user = userMapper.dtoToEntity(registerClientDTO, passwordEncode);
-
-        return userRepository.save(user);
     }
 
     /**
      * -This method allows a user to log in to the platform.
      *
-     * @param loginClientDTO
-     * @return
+     * @param loginClientDTO DTO with the information required for login
+     * @return Optional<User>
      * @throws ErrorResponseException
      */
     @Override
-    public Optional<User> login(LoginClientDTO loginClientDTO) throws ErrorResponseException {
+    public ClientDTO login(LoginClientDTO loginClientDTO) throws ErrorResponseException {
 
         // Verify that the DTO brings valid information
         if (loginClientDTO == null || loginClientDTO.emailAddress() == null ||
@@ -78,23 +85,39 @@ public class UserServiceImpl implements UserService{
 
         // Check that the user exists in the database and that the password matches.
         if (optionalUser.isEmpty() || !passwordEncoder.matches(loginClientDTO.password(), optionalUser.get().getPassword())){
-            return Optional.empty();
+            return new ClientDTO("", "", "", "");
         }
 
         // If the credentials are valid return the user
-        return optionalUser;
+        return new ClientDTO(optionalUser.get().getIdUser(), optionalUser.get().getName(),
+                optionalUser.get().getRole().toString(), optionalUser.get().getEmailAddress());
     }
 
     /**
      * -This method allows a user to edit his or her profile information.
-     * @param updateUserDTO
-     * @param id
-     * @return
-     * @throws NotFoundException
+     *
+     * @param updateUserDTO DTO with the information required for profileEdit
+     * @param id User's id
+     * @throws ResourceNotFoundException
+     * @throws IllegalArgumentException
      */
     @Override
-    public User profileEdit(UpdateUserDTO updateUserDTO, String id) throws NotFoundException {
-        return null;
+    public void profileEdit(UpdateUserDTO updateUserDTO, String id) throws ResourceNotFoundException, IllegalArgumentException {
+
+        if (updateUserDTO == null || updateUserDTO.name() == null || updateUserDTO.address() == null ||
+        updateUserDTO.phoneNumber() == null || updateUserDTO.emailAddress() == null || updateUserDTO.name().isEmpty() ||
+        updateUserDTO.address().isEmpty() || updateUserDTO.phoneNumber().isEmpty() || updateUserDTO.emailAddress().isEmpty()){
+            throw new IllegalArgumentException("The updateUserDTO and its fields cannot be null or empty.");
+        }
+
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("The user does not exist."));
+
+        user.setName(updateUserDTO.name());
+        user.setAddress(updateUserDTO.address());
+        user.setPhoneNumber(updateUserDTO.phoneNumber());
+        user.setEmailAddress(updateUserDTO.emailAddress());
+
+        userRepository.save(user);
     }
 
     /**

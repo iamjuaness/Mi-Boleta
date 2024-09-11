@@ -1,5 +1,6 @@
 package com.microservice.manage_user.persistence.model.entities;
 
+import com.microservice.manage_user.persistence.model.enums.Role;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -20,6 +21,7 @@ public class User {
     private String idUser;
     private String name;
     private String address;
+    private Role role;
     private String phoneNumber;
     private String emailAddress;
     private String password;
