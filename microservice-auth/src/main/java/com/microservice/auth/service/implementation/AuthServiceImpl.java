@@ -1,32 +1,33 @@
 package com.microservice.auth.service.implementation;
 
 import com.microservice.auth.client.ManageUserClient;
-import com.microservice.auth.persentation.dto.ClientDTO;
-import com.microservice.auth.persentation.dto.LoginClientDTO;
-import com.microservice.auth.persentation.dto.RegisterClientDTO;
-import com.microservice.auth.persentation.dto.TokenDTO;
+import com.microservice.auth.presentation.advice.ResourceNotFoundException;
+import com.microservice.auth.presentation.dto.ClientDTO;
+import com.microservice.auth.presentation.dto.LoginClientDTO;
+import com.microservice.auth.presentation.dto.RegisterClientDTO;
+import com.microservice.auth.presentation.dto.TokenDTO;
 import com.microservice.auth.service.interfaces.AuthService;
 import com.microservice.auth.utils.JwtUtils;
+import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.print.AttributeException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 public class AuthServiceImpl implements AuthService {
+    final JwtUtils jwtUtilsService;
+    final ManageUserClient manageUserClient;
+    final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private JwtUtils jwtUtilsService;
-
-    @Autowired
-    private ManageUserClient manageUserClient;
-
-    private PasswordEncoder passwordEncoder;
+    public AuthServiceImpl(JwtUtils jwtUtilsService, ManageUserClient manageUserClient, PasswordEncoder passwordEncoder) {
+        this.jwtUtilsService = jwtUtilsService;
+        this.manageUserClient = manageUserClient;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public TokenDTO loginClient(LoginClientDTO loginClientDTO) throws Exception {
@@ -34,34 +35,32 @@ public class AuthServiceImpl implements AuthService {
         try {
             //verificar si tiene datos
             if (loginClientDTO == null) {
-                throw new Exception("Por favor ingrese un valor valido");
+                throw new IllegalArgumentException("Por favor ingrese un valor valido");
             }
-            String passwordHash = passwordEncoder.encode(loginClientDTO.password());
 
             //Buscar el usuario en el msvc UserManage
-            ClientDTO user = manageUserClient.getClient(loginClientDTO.emailAddress(), passwordHash) ;
+            ClientDTO user = manageUserClient.getClient(loginClientDTO.emailAddress(), loginClientDTO.password()) ;
 
             //Verificar que exista ese usuario
             if (user == null) {
-                throw new Exception("No se ha encontrado un usuario asocioado a la información proporcionada");
+                throw new ResourceNotFoundException("No se ha encontrado un usuario asocioado a la información proporcionada");
             }
 
             // Crear los atributos del token de autenticación
             Map<String, Object> authToken = new HashMap<>();
-            authToken.put("role", "USER");
-            authToken.put("nombre", user.name());
-            authToken.put("id", user.idUser());
+            authToken.put("role", user.role());
+            authToken.put("name", user.name());
+            authToken.put("idUser", user.idUser());
 
             //generar el token
-            String token = jwtUtilsService.generarToken(user.emailAddress(), authToken);
+                String token = jwtUtilsService.generarToken(user.emailAddress(), authToken);
 
-            // Crear un objeto TokenDto para devolver el token generado
-            return new TokenDTO(token);
-
-        } catch (Exception e) {
-            throw new Exception("some went wrong");
-
+                // Crear un objeto TokenDto para devolver el token generado
+                return new TokenDTO(token);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
         }
+        return null;
     }
 
     @Override
@@ -70,6 +69,7 @@ public class AuthServiceImpl implements AuthService {
         //verificar que que el DTO no sea nulo
         Objects.requireNonNull(registerUserDto, "Por favor ingrese información ");
 
+        return null;
 
     }
 

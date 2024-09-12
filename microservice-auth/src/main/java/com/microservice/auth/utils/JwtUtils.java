@@ -5,7 +5,6 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.time.Instant;
@@ -57,13 +56,13 @@ public class JwtUtils {
             Jws<Claims> claims = parseJwt(token);
 
             // Verificar si el token está a punto de expirar (por ejemplo, dentro de los próximos 5 minutos)
-            Instant tokenExpiration = claims.getBody().getExpiration().toInstant();
+            Instant tokenExpiration = claims.getPayload().getExpiration().toInstant();
             Instant now = Instant.now();
             Instant fiveMinutesBeforeExpiration = tokenExpiration.minus(5, ChronoUnit.MINUTES); // Puedes ajustar el intervalo según tus necesidades
 
             if (now.isAfter(fiveMinutesBeforeExpiration)) {
                 // El token está a punto de expirar, generar un nuevo token actualizado
-                String email = claims.getBody().getSubject();
+                String email = claims.getPayload().getSubject();
                 Map<String, Object> nuevosClaims = new HashMap<>();
                 // Agregar cualquier otro claim que desees transferir al nuevo token
                 return generarToken(email, nuevosClaims);

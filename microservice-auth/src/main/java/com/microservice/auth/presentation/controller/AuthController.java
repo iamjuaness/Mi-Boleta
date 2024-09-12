@@ -1,11 +1,9 @@
-package com.microservice.auth.persentation.controller;
+package com.microservice.auth.presentation.controller;
 
-import com.microservice.auth.persentation.dto.HTTP.MessageAuthDTO;
-import com.microservice.auth.persentation.dto.LoginClientDTO;
-import com.microservice.auth.persentation.dto.RegisterClientDTO;
-import com.microservice.auth.persentation.dto.TokenDTO;
+import com.microservice.auth.presentation.dto.HTTP.MessageAuthDTO;
+import com.microservice.auth.presentation.dto.LoginClientDTO;
+import com.microservice.auth.presentation.dto.TokenDTO;
 import com.microservice.auth.service.implementation.AuthServiceImpl;
-import com.microservice.auth.service.interfaces.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

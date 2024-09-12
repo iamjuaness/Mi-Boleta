@@ -1,4 +1,4 @@
-package com.microservice.auth.persentation.dto;
+package com.microservice.auth.presentation.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

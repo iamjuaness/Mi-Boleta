@@ -1,7 +1,6 @@
 package com.microservice.auth.client;
 
-import com.microservice.auth.persentation.dto.ClientDTO;
-import com.microservice.auth.persentation.dto.LoginClientDTO;
+import com.microservice.auth.presentation.dto.ClientDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -10,6 +9,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface ManageUserClient {
 
    @GetMapping("/login-client")
-    ClientDTO getClient(@RequestParam("email")String email, @RequestParam("password")String password);
+    ClientDTO getClient(@RequestParam("emailAddress")String emailAddress, @RequestParam("password")String password);
 
 }

@@ -1,4 +1,4 @@
-package com.microservice.auth.persentation.dto.HTTP;
+package com.microservice.auth.presentation.dto.HTTP;
 
 public record MessageAuthDTO <T> (
         boolean error,
