@@ -7,6 +7,7 @@ import com.microservice.manage_user.persistence.model.entities.User;
 import com.microservice.manage_user.persistence.repository.UserRepository;
 import com.microservice.manage_user.service.interfaces.UserService;
 import com.microservice.manage_user.utils.AppUtil;
+import com.microservice.manage_user.utils.SecurityConfig;
 import com.microservice.manage_user.utils.mapper.UserMapper;
 import jakarta.ws.rs.NotFoundException;
 import org.springframework.dao.DuplicateKeyException;
@@ -72,7 +73,6 @@ public class UserServiceImpl implements UserService{
      */
     @Override
     public ClientDTO login(LoginClientDTO loginClientDTO) throws ErrorResponseException {
-
         // Verify that the DTO brings valid information
         if (loginClientDTO == null || loginClientDTO.emailAddress() == null ||
                 loginClientDTO.password() == null || loginClientDTO.emailAddress().isEmpty() ||
@@ -82,15 +82,14 @@ public class UserServiceImpl implements UserService{
 
         // User search
         Optional<User> optionalUser = userRepository.findByEmailAddress(loginClientDTO.emailAddress());
-
         // Check that the user exists in the database and that the password matches.
         if (optionalUser.isEmpty() || !passwordEncoder.matches(loginClientDTO.password(), optionalUser.get().getPassword())){
-            return new ClientDTO("", "", "", "");
+            return new ClientDTO("", "", null, "");
         }
 
         // If the credentials are valid return the user
         return new ClientDTO(optionalUser.get().getIdUser(), optionalUser.get().getName(),
-                optionalUser.get().getRole().toString(), optionalUser.get().getEmailAddress());
+                optionalUser.get().getRole(), optionalUser.get().getEmailAddress());
     }
 
     /**

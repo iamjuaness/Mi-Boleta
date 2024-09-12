@@ -1,5 +1,6 @@
 package com.microservice.manage_user.presentation.dto;
 
+import com.microservice.manage_user.persistence.model.enums.Role;
 import jakarta.validation.constraints.NotBlank;
 
 public record ClientDTO(
@@ -8,8 +9,8 @@ public record ClientDTO(
         @NotBlank(message = "Name is required")
         String name,
         @NotBlank(message = "Role is required")
-        String role,
+        Role role,
         @NotBlank(message = "email is required")
-        String email
+        String emailAddress
 ) {
 }

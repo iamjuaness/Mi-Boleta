@@ -41,8 +41,8 @@ public class ManageUserController {
      * @return ResponseEntity<ClientDTO>
      */
     @GetMapping("/login-client")
-    public ResponseEntity<ClientDTO> loginClient(@Valid @RequestParam String email, @Valid @RequestParam String password){
-        LoginClientDTO loginClientDTO = new LoginClientDTO(email, password);
+    public ResponseEntity<ClientDTO> loginClient(@Valid @RequestParam String emailAddress, @Valid @RequestParam String password){
+        LoginClientDTO loginClientDTO = new LoginClientDTO(emailAddress, password);
         return ResponseEntity.ok().body(userService.login(loginClientDTO));
     }
 

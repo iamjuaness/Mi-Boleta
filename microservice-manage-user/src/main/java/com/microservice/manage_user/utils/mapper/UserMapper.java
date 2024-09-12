@@ -1,6 +1,7 @@
 package com.microservice.manage_user.utils.mapper;
 
 import com.microservice.manage_user.persistence.model.entities.User;
+import com.microservice.manage_user.persistence.model.enums.Role;
 import com.microservice.manage_user.presentation.dto.RegisterClientDTO;
 import com.microservice.manage_user.presentation.dto.UpdateUserDTO;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ public class UserMapper {
         User user = new User();
 
         user.setIdUser(registerClientDTO.idUser());
+        user.setRole(Role.CLIENT);
         user.setName(registerClientDTO.name());
         user.setAddress(registerClientDTO.address());
         user.setPhoneNumber(registerClientDTO.phoneNumber());
