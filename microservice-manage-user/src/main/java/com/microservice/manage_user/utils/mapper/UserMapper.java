@@ -2,6 +2,7 @@ package com.microservice.manage_user.utils.mapper;
 
 import com.microservice.manage_user.persistence.model.entities.User;
 import com.microservice.manage_user.persistence.model.enums.Role;
+import com.microservice.manage_user.presentation.dto.ClientDTO;
 import com.microservice.manage_user.presentation.dto.RegisterClientDTO;
 import com.microservice.manage_user.presentation.dto.UpdateUserDTO;
 import org.springframework.stereotype.Service;
@@ -32,5 +33,12 @@ public class UserMapper {
         user.setEmailAddress(updateUserDTO.emailAddress());
 
         return user;
+    }
+
+    public ClientDTO entityToClientDTO(User user){
+        if (user == null){
+            throw new IllegalArgumentException("User null");
+        }
+        return new ClientDTO(user.getIdUser(), user.getName(), user.getRole(), user.getEmailAddress());
     }
 }

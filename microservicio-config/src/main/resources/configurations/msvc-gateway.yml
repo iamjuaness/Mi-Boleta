@@ -14,7 +14,11 @@ spring:
         locator:
           enable: true
       routes:
-        - id:
-          uri:
+        - id: auth
+          uri: http://localhost:8081
           predicates:
-            - Path=/
+            - Path=/api/auth/**
+        - id: users
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/manage-user/**

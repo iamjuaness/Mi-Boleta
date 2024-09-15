@@ -12,13 +12,19 @@ import com.microservice.manage_user.presentation.dto.UpdateUserDTO;
 import com.microservice.manage_user.service.implementation.UserServiceImpl;
 import com.microservice.manage_user.utils.AppUtil;
 import com.microservice.manage_user.utils.mapper.UserMapper;
+import com.mongodb.MongoException;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,13 +47,16 @@ class UserServiceTest {
     @Mock
     PasswordEncoder passwordEncoder;
 
+    @Mock
+    private MongoTemplate mongoTemplate;
+
     public UserServiceTest() {
         MockitoAnnotations.openMocks(this);
     }
 
     @Test
     void testSignUp() {
-        RegisterClientDTO registerClientDTO = new RegisterClientDTO("123", "Pepe", "Armenia", Role.CLIENT,
+        RegisterClientDTO registerClientDTO = new RegisterClientDTO("123", "Pepe", "Armenia",
                 "123", "pepe@gmail.com", "123", "123");
 
         String passwordEncode = passwordEncoder.encode(registerClientDTO.password());
@@ -70,8 +79,8 @@ class UserServiceTest {
     @Test
     void testSignUpThrowsIllegalStateExceptionWhenEmailAlreadyInUse() {
         // Preparar datos de prueba
-        RegisterClientDTO registerClientDTO = new RegisterClientDTO("123", "Pepe", "Armenia", Role.CLIENT,
-                "123", "pepe@gmail.com", "123", "123");
+        RegisterClientDTO registerClientDTO = new RegisterClientDTO("123", "Pepe", "Armenia", "123",
+                "pepe@gmail.com", "123", "123");
 
         // Configurar el mock para que `checkEmail` devuelva `true`
         when(appUtil.checkEmail(registerClientDTO.emailAddress())).thenReturn(true);
@@ -85,9 +94,9 @@ class UserServiceTest {
     }
 
     @Test
-    void testSignUpThrowsDuplicateKeyExceptionWhenIdUserAlreadyInUse() {
+    void testSignUpThrowsIllegalStateExceptionWhenIdUserAlreadyInUse() {
         // Preparar datos de prueba
-        RegisterClientDTO registerClientDTO = new RegisterClientDTO("123", "Pepe", "Armenia", Role.CLIENT,
+        RegisterClientDTO registerClientDTO = new RegisterClientDTO("234", "Pepe", "Armenia",
                 "123", "pepe@gmail.com", "123", "123");
 
         // Configurar los mocks
@@ -95,13 +104,32 @@ class UserServiceTest {
         when(appUtil.checkIdUser(registerClientDTO.idUser())).thenReturn(true);
 
         // Ejecutar el método y verificar que se lanza la excepción
-        DuplicateKeyException thrown = assertThrows(DuplicateKeyException.class, () -> {
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
             userService.signUp(registerClientDTO);
         });
 
-        assertEquals("IdUser 123 is already in use", thrown.getMessage());
+        assertEquals("IdUser 234 is already in use", thrown.getMessage());
     }
 
+    @Test
+    void testSignUpHandlesMongoException() {
+        // Preparar datos de prueba
+        RegisterClientDTO registerClientDTO = new RegisterClientDTO("234", "Pepe", "Armenia", "123",
+                "pepe@gmail.com", "123", "123");
+
+        // Configurar los mocks
+        when(appUtil.checkEmail(registerClientDTO.emailAddress())).thenReturn(false);
+        when(appUtil.checkIdUser(registerClientDTO.idUser())).thenReturn(false);
+        when(passwordEncoder.encode(registerClientDTO.password())).thenReturn("encodedPassword");
+        when(userMapper.dtoRegisterToEntity(registerClientDTO, "encodedPassword")).thenReturn(new User());
+        doThrow(new MongoException("Mongo error")).when(userRepository).save(any(User.class));
+
+        // Ejecutar el método
+        State result = userService.signUp(registerClientDTO);
+
+        // Verificar resultados
+        assertEquals(State.ERROR, result);
+    }
 
 
     @Test
@@ -168,7 +196,7 @@ class UserServiceTest {
         ClientDTO result = userService.login(loginClientDTO);
 
         // Verificar que el resultado es un ClientDTO vacío
-        assertEquals(new ClientDTO("", "", "", ""), result);
+        assertEquals(new ClientDTO("", "", null, ""), result);
     }
 
     @Test
@@ -187,7 +215,7 @@ class UserServiceTest {
         ClientDTO result = userService.login(loginClientDTO);
 
         // Verificar que el resultado es un ClientDTO vacío
-        assertEquals(new ClientDTO("", "", "", ""), result);
+        assertEquals(new ClientDTO("", "", null, ""), result);
     }
 
     @Test
@@ -209,7 +237,7 @@ class UserServiceTest {
         ClientDTO result = userService.login(loginClientDTO);
 
         // Verificar que el resultado contiene los datos correctos
-        assertEquals(new ClientDTO("123", "John Doe", "CLIENT", "test@example.com"), result);
+        assertEquals(new ClientDTO("123", "John Doe", Role.CLIENT, "test@example.com"), result);
     }
 
     @Test
@@ -357,6 +385,120 @@ class UserServiceTest {
         assertEquals(updateUserDTO.address(), user.getAddress());
         assertEquals(updateUserDTO.phoneNumber(), user.getPhoneNumber());
         assertEquals(updateUserDTO.emailAddress(), user.getEmailAddress());
+    }
+
+    @Test
+    void getUser_ShouldThrowException_WhenIdIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.getUser(null);
+        });
+        assertEquals("Id is null", exception.getMessage());
+    }
+
+    @Test
+    void getUser_ShouldThrowException_WhenIdIsEmpty() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.getUser("");
+        });
+        assertEquals("Id is null", exception.getMessage());
+    }
+
+    @Test
+    void getUser_ShouldThrowResourceNotFoundException_WhenUserDoesNotExist() {
+        // Arrange
+        String userId = "123";
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            userService.getUser(userId);
+        });
+
+        assertEquals("User not exists", exception.getMessage());
+    }
+
+    @Test
+    void getUser_ShouldReturnUser_WhenUserExists() throws ResourceNotFoundException {
+        // Arrange
+        String userId = "123";
+        User mockUser = new User(); // Crear un mock de User
+        when(userRepository.findById(userId)).thenReturn(Optional.of(mockUser));
+
+        // Act
+        User result = userService.getUser(userId);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(mockUser, result);
+    }
+
+    @Test
+    void getUsers_ShouldThrowResourceNotFoundException_WhenNoUsersExist() {
+        // Arrange
+        when(userRepository.findAll()).thenReturn(new ArrayList<>());
+
+        // Act & Assert
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            userService.getUsers();
+        });
+
+        assertEquals("Users are empty", exception.getMessage());
+    }
+
+    @Test
+    void getUsers_ShouldReturnListOfUsers_WhenUsersExist() throws ResourceNotFoundException {
+        // Arrange
+        List<User> mockUsers = List.of(new User(), new User()); // Lista con 2 usuarios simulados
+        when(userRepository.findAll()).thenReturn(mockUsers);
+
+        // Act
+        List<User> result = userService.getUsers();
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.size());
+    }
+
+
+    @Test
+    void deleteAccount_ShouldThrowIllegalArgumentException_WhenIdIsNull() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.deleteAccount(null);
+        });
+        assertEquals("Id is not valid", exception.getMessage());
+    }
+
+    @Test
+    void deleteAccount_ShouldThrowIllegalArgumentException_WhenIdIsEmpty() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            userService.deleteAccount("");
+        });
+        assertEquals("Id is not valid", exception.getMessage());
+    }
+
+    @Test
+    void deleteAccount_ShouldCallMongoTemplateUpdate_WhenValidIdIsProvided() {
+        // Arrange
+        String userId = "123";
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(userId));
+        Update update = new Update().set("state", State.INACTIVE);
+
+        // Act
+        userService.deleteAccount(userId);
+
+        // Assert
+        verify(mongoTemplate, times(1)).updateFirst(query, update, User.class);
+    }
+
+    @Test
+    void deleteAccount_ShouldHandleMongoException() {
+        // Arrange
+        String userId = "123";
+        doThrow(new MongoException("Some Mongo error")).when(mongoTemplate).updateFirst(any(), any(), eq(User.class));
+
+        // Act
+        assertDoesNotThrow(() -> userService.deleteAccount(userId)); // Verifica que no lance una excepción no manejada
     }
 
 }

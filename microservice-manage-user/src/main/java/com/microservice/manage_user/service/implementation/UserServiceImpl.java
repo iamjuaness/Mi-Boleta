@@ -7,14 +7,18 @@ import com.microservice.manage_user.persistence.model.entities.User;
 import com.microservice.manage_user.persistence.repository.UserRepository;
 import com.microservice.manage_user.service.interfaces.UserService;
 import com.microservice.manage_user.utils.AppUtil;
-import com.microservice.manage_user.utils.SecurityConfig;
 import com.microservice.manage_user.utils.mapper.UserMapper;
+import com.mongodb.MongoException;
 import jakarta.ws.rs.NotFoundException;
-import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.ErrorResponseException;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -24,12 +28,14 @@ public class UserServiceImpl implements UserService{
     final AppUtil appUtil;
     final UserMapper userMapper;
     final PasswordEncoder passwordEncoder;
+    final MongoTemplate mongoTemplate;
 
-    public UserServiceImpl(UserRepository userRepository, AppUtil appUtil, UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, AppUtil appUtil, UserMapper userMapper, PasswordEncoder passwordEncoder, MongoTemplate mongoTemplate) {
         this.userRepository = userRepository;
         this.appUtil = appUtil;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.mongoTemplate = mongoTemplate;
     }
 
     /**
@@ -48,7 +54,7 @@ public class UserServiceImpl implements UserService{
             }
 
             if(appUtil.checkIdUser(registerClientDTO.idUser())){
-                throw new DuplicateKeyException("IdUser " + registerClientDTO.idUser() + " is already in use");
+                throw new IllegalStateException("IdUser " + registerClientDTO.idUser() + " is already in use");
             }
 
             String passwordEncode = passwordEncoder.encode(registerClientDTO.password());
@@ -59,7 +65,8 @@ public class UserServiceImpl implements UserService{
 
             return State.SUCCESS;
 
-        } catch (Exception e){
+        } catch (MongoException e){
+            e.printStackTrace();
             return State.ERROR;
         }
     }
@@ -119,6 +126,30 @@ public class UserServiceImpl implements UserService{
         userRepository.save(user);
     }
 
+    @Override
+    public User getUser(String id) throws ResourceNotFoundException {
+
+        if (id == null || id.isEmpty()){
+            throw new IllegalArgumentException("Id is null");
+        }
+        Optional<User> optionalUser = userRepository.findById(id);
+
+        if (optionalUser.isEmpty()){
+            throw new ResourceNotFoundException("User not exists");
+        }
+        return optionalUser.get();
+    }
+
+    @Override
+    public List<User> getUsers() throws ResourceNotFoundException {
+        List<User> users = userRepository.findAll();
+
+        if (users.isEmpty()){
+            throw new ResourceNotFoundException("Users are empty");
+        }
+        return users;
+    }
+
     /**
      * -This method allows a user to add tickets to a shopping cart.
      * @param addToCartDTO
@@ -156,5 +187,25 @@ public class UserServiceImpl implements UserService{
     @Override
     public void activateAccount(String id) throws ErrorResponseException { //
 
+    }
+
+    @Override
+    public void deleteAccount(String id) {
+        try{
+            if (id == null || id.isEmpty()){
+                throw new IllegalArgumentException("Id is not valid");
+            }
+            Query query = new Query();
+            query.addCriteria(Criteria.where("_id").is(id));
+
+            // Definir la actualización (modificar solo el campo "nombre")
+            Update update = new Update();
+            update.set("state", State.INACTIVE);
+
+            // Ejecutar la actualización
+            mongoTemplate.updateFirst(query, update, User.class);
+        } catch (MongoException e){
+            e.printStackTrace();
+        }
     }
 }
