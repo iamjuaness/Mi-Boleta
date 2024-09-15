@@ -9,10 +9,10 @@ import org.springframework.data.annotation.Id;
 @NoArgsConstructor
 @ToString
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class EventVO {
+public class UserVO {
 
     @EqualsAndHashCode.Include
     @Id
-    private String idEvent;
+    private String idUser;
     private String name;
 }
