@@ -21,6 +21,11 @@ public class AppUtil {
         return userRepository.findByEmailAddress(email).isPresent();
     }
 
+    /**
+     * - Method to verify if the idUser already exists.
+     * @param id
+     * @return
+     */
     public boolean checkIdUser(String id){
         return userRepository.findById(id).isPresent();
     }

@@ -4,6 +4,7 @@ import com.microservice.manage_user.persistence.model.enums.Role;
 import com.microservice.manage_user.persistence.model.enums.State;
 import com.microservice.manage_user.persistence.model.vo.CouponVO;
 import com.microservice.manage_user.persistence.model.vo.EventVO;
+import com.microservice.manage_user.presentation.dto.AddToCartDTO;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -26,11 +27,13 @@ public class User {
     private State state;
     private String address;
     private Role role;
+    private String code;
     private String phoneNumber;
     private String emailAddress;
     private String password;
-    private List<EventVO> eventVOS;
-    private List<CouponVO> couponVOS;
+    private List<EventVO> eventsUser;
+    private List<CouponVO> couponsUser;
+    private List<AddToCartDTO> cartUser;
 
     public User(String idUser, String name, String address, Role role, String phoneNumber, String emailAddress, String password) {
         this.idUser = idUser;

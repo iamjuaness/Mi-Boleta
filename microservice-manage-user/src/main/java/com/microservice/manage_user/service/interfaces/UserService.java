@@ -16,9 +16,11 @@ public interface UserService {
     void profileEdit(UpdateUserDTO updateUserDTO, String id) throws NotFoundException, ResourceNotFoundException;
     User getUser(String id) throws ResourceNotFoundException;
     List<User> getUsers() throws ResourceNotFoundException;
-    void addToCart(AddToCartDTO addToCartDTO) throws ErrorResponseException;
-    void deleteTicketsCart() throws NotFoundException, ErrorResponseException;
-    void clearCart() throws ErrorResponseException;
-    void activateAccount(String id) throws ErrorResponseException;
-    void deleteAccount(String id);
+
+    void addToCart(AddToCartDTO addToCartDTO, String id) throws ErrorResponseException, ResourceNotFoundException;
+
+    void deleteTicketsCart(String userId, String itemId) throws NotFoundException, ErrorResponseException, ResourceNotFoundException;
+    void clearCart(String userId) throws ErrorResponseException, ResourceNotFoundException;
+    void activateAccount(String id) throws ErrorResponseException, ResourceNotFoundException;
+    void deleteAccount(String id) throws ResourceNotFoundException;
 }

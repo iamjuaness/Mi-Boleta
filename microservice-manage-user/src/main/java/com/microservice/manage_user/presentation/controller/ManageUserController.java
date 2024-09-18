@@ -3,11 +3,8 @@ package com.microservice.manage_user.presentation.controller;
 import com.microservice.manage_user.persistence.model.entities.User;
 import com.microservice.manage_user.persistence.model.enums.State;
 import com.microservice.manage_user.presentation.advice.ResourceNotFoundException;
-import com.microservice.manage_user.presentation.dto.ClientDTO;
-import com.microservice.manage_user.presentation.dto.LoginClientDTO;
-import com.microservice.manage_user.presentation.dto.RegisterClientDTO;
+import com.microservice.manage_user.presentation.dto.*;
 import com.microservice.manage_user.persistence.repository.UserRepository;
-import com.microservice.manage_user.presentation.dto.UpdateUserDTO;
 import com.microservice.manage_user.service.implementation.UserServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -82,12 +79,53 @@ public class ManageUserController {
     }
 
     /**
+     * This endpoint is used to run the addToCart service
+     * @param addToCartDTO information for to add to cart
+     * @param id user's id
+     * @throws ResourceNotFoundException if is cannot to add to cart
+     */
+    @PutMapping("/add-to-cart/{id}")
+    public void addToCart(@Valid @RequestBody AddToCartDTO addToCartDTO, @PathVariable String id) throws ResourceNotFoundException {
+        userService.addToCart(addToCartDTO, id);
+    }
+
+    /**
+     * This endpoint is used to run the deleteTicketsCart
+     * @param userId user's id
+     * @param itemId item's id
+     * @throws ResourceNotFoundException if is cannot to add to cart
+     */
+    @PutMapping("/delete-tickets-cart/{userId}/cart/{itemId}")
+    public void deleteTicketsCart(@PathVariable String userId, @PathVariable String itemId) throws ResourceNotFoundException {
+        userService.deleteTicketsCart(userId, itemId);
+    }
+
+    /**
+     * This endpoint is used to run the clearCart service
+     * @param userId user's id
+     * @throws ResourceNotFoundException if is cannot to clear the cart
+     */
+    @PutMapping("/clear-cart/{userId}")
+    public void clearCart(@PathVariable String userId) throws ResourceNotFoundException {
+        userService.clearCart(userId);
+    }
+
+    /**
+     * This endpoint is used to run the activateAccount service
+     * @param id validation code
+     * @throws ResourceNotFoundException if is cannot to activate the account
+     */
+    @PutMapping("/activate-account/{id}")
+    public void activateAccount(@PathVariable String id) throws ResourceNotFoundException {
+        userService.activateAccount(id);
+    }
+
+    /**
      * This endpoint is used to run the deleteAccount service
      * @param id User's id
      */
     @PutMapping("/delete-account/{id}")
-    public void deleteAccount(@PathVariable String id){
+    public void deleteAccount(@PathVariable String id) throws ResourceNotFoundException {
         userService.deleteAccount(id);
     }
-
 }

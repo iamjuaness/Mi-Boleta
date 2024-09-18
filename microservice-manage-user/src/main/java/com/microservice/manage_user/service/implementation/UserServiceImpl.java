@@ -5,21 +5,23 @@ import com.microservice.manage_user.presentation.advice.ResourceNotFoundExceptio
 import com.microservice.manage_user.presentation.dto.*;
 import com.microservice.manage_user.persistence.model.entities.User;
 import com.microservice.manage_user.persistence.repository.UserRepository;
+import com.microservice.manage_user.service.exception.ErrorResponseException;
 import com.microservice.manage_user.service.interfaces.UserService;
 import com.microservice.manage_user.utils.AppUtil;
 import com.microservice.manage_user.utils.mapper.UserMapper;
 import com.mongodb.MongoException;
-import jakarta.ws.rs.NotFoundException;
+import com.mongodb.client.result.UpdateResult;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.ErrorResponseException;
+import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService{
@@ -29,6 +31,9 @@ public class UserServiceImpl implements UserService{
     final UserMapper userMapper;
     final PasswordEncoder passwordEncoder;
     final MongoTemplate mongoTemplate;
+
+    private static final String NOT_FOUND = "User not found";
+    private static final String ID_NULL = "Id is not valid";
 
     public UserServiceImpl(UserRepository userRepository, AppUtil appUtil, UserMapper userMapper, PasswordEncoder passwordEncoder, MongoTemplate mongoTemplate) {
         this.userRepository = userRepository;
@@ -43,30 +48,37 @@ public class UserServiceImpl implements UserService{
      *
      * @param registerClientDTO DTO with the information required for registration
      * @return User
-     * @throws IllegalStateException
+     * @throws IllegalStateException if emailAddress or idUser are already in use
      */
     @Override
     public State signUp(RegisterClientDTO registerClientDTO) throws IllegalStateException {
 
-        try{
-            if(appUtil.checkEmail(registerClientDTO.emailAddress())){
-                throw new IllegalStateException("Mail " + registerClientDTO.emailAddress() + " is already in use");
-            }
+        // Verify that the email is not repeated
+        if (appUtil.checkEmail(registerClientDTO.emailAddress())) {
+            throw new IllegalStateException("Email " + registerClientDTO.emailAddress() + " is already in use");
+        }
 
-            if(appUtil.checkIdUser(registerClientDTO.idUser())){
-                throw new IllegalStateException("IdUser " + registerClientDTO.idUser() + " is already in use");
-            }
+        // Verify that the idUser is not repeated
+        if (appUtil.checkIdUser(registerClientDTO.idUser())) {
+            throw new IllegalStateException("IdUser " + registerClientDTO.idUser() + " is already in use");
+        }
 
+        try {
+
+            // Encoding the password
             String passwordEncode = passwordEncoder.encode(registerClientDTO.password());
 
+            // Convert dto to a user entity
             User user = userMapper.dtoRegisterToEntity(registerClientDTO, passwordEncode);
 
+            // Save in the database
             userRepository.save(user);
 
+            // return success state
             return State.SUCCESS;
 
-        } catch (MongoException e){
-            e.printStackTrace();
+        } catch (MongoException e) {
+            // return error state
             return State.ERROR;
         }
     }
@@ -76,27 +88,27 @@ public class UserServiceImpl implements UserService{
      *
      * @param loginClientDTO DTO with the information required for login
      * @return Optional<User>
-     * @throws ErrorResponseException
+     * @throws ErrorResponseException Error Response Exception
      */
     @Override
     public ClientDTO login(LoginClientDTO loginClientDTO) throws ErrorResponseException {
-        // Verify that the DTO brings valid information
-        if (loginClientDTO == null || loginClientDTO.emailAddress() == null ||
-                loginClientDTO.password() == null || loginClientDTO.emailAddress().isEmpty() ||
-                loginClientDTO.password().isEmpty()){
+
+        // Validate that loginDTO is not null
+        if (loginClientDTO == null || !StringUtils.hasText(loginClientDTO.emailAddress()) || !StringUtils.hasText(loginClientDTO.password())) {
             throw new IllegalArgumentException("The login DTO and its fields cannot be null or empty.");
         }
 
-        // User search
-        Optional<User> optionalUser = userRepository.findByEmailAddress(loginClientDTO.emailAddress());
-        // Check that the user exists in the database and that the password matches.
-        if (optionalUser.isEmpty() || !passwordEncoder.matches(loginClientDTO.password(), optionalUser.get().getPassword())){
-            return new ClientDTO("", "", null, "");
+        // Get the user of the database, if not found run an ErrorResponseException
+        User user = userRepository.findByEmailAddress(loginClientDTO.emailAddress())
+                .orElseThrow(() -> new ErrorResponseException("Invalid email or password"));
+
+        // Compares if password match with password of the user in the database
+        if (!passwordEncoder.matches(loginClientDTO.password(), user.getPassword())) {
+            throw new ErrorResponseException("Invalid email or password");
         }
 
-        // If the credentials are valid return the user
-        return new ClientDTO(optionalUser.get().getIdUser(), optionalUser.get().getName(),
-                optionalUser.get().getRole(), optionalUser.get().getEmailAddress());
+        // Return a ClientDTO with information of the user that is in the database
+        return new ClientDTO(user.getIdUser(), user.getName(), user.getRole(), user.getEmailAddress());
     }
 
     /**
@@ -104,108 +116,240 @@ public class UserServiceImpl implements UserService{
      *
      * @param updateUserDTO DTO with the information required for profileEdit
      * @param id User's id
-     * @throws ResourceNotFoundException
-     * @throws IllegalArgumentException
+     * @throws ResourceNotFoundException if it not founds a user
+     * @throws IllegalArgumentException if updateUserDTO is null
      */
     @Override
     public void profileEdit(UpdateUserDTO updateUserDTO, String id) throws ResourceNotFoundException, IllegalArgumentException {
 
-        if (updateUserDTO == null || updateUserDTO.name() == null || updateUserDTO.address() == null ||
-        updateUserDTO.phoneNumber() == null || updateUserDTO.emailAddress() == null || updateUserDTO.name().isEmpty() ||
-        updateUserDTO.address().isEmpty() || updateUserDTO.phoneNumber().isEmpty() || updateUserDTO.emailAddress().isEmpty()){
-            throw new IllegalArgumentException("The updateUserDTO and its fields cannot be null or empty.");
+        // Validates that updateUserDTO is not null
+        if (updateUserDTO == null){
+            throw new IllegalArgumentException("UpdateUserDTO cannot be null.");
         }
 
-        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("The user does not exist."));
+        // Gets the user that is in the database
+        User user = getUser(id);
 
-        user.setName(updateUserDTO.name());
-        user.setAddress(updateUserDTO.address());
-        user.setPhoneNumber(updateUserDTO.phoneNumber());
-        user.setEmailAddress(updateUserDTO.emailAddress());
+        // A boolean variable is defined as needsUpdate and is initializing as false
+        boolean needsUpdate = false;
 
-        userRepository.save(user);
+        // Validates if name of the user changed
+        if (!updateUserDTO.name().equals(user.getName())) {
+            user.setName(updateUserDTO.name());
+            needsUpdate = true;
+        }
+
+        // Validates if address of the user changed
+        if (!updateUserDTO.address().equals(user.getAddress())) {
+            user.setAddress(updateUserDTO.address());
+            needsUpdate = true;
+        }
+
+        // Validates if phoneNumber of the user changed
+        if (!updateUserDTO.phoneNumber().equals(user.getPhoneNumber())) {
+            user.setPhoneNumber(updateUserDTO.phoneNumber());
+            needsUpdate = true;
+        }
+
+        // Validate if emailAddress of the user changed
+        if (!updateUserDTO.emailAddress().equals(user.getEmailAddress())) {
+            user.setEmailAddress(updateUserDTO.emailAddress());
+            needsUpdate = true;
+        }
+
+        // Only saves the information if the parameters changed
+        if (needsUpdate) {
+            userRepository.save(user);
+        }
     }
 
+    /**
+     * -This method allows to get one user by him id
+     * @param id userId
+     * @return User
+     * @throws ResourceNotFoundException if not founds a user
+     */
     @Override
     public User getUser(String id) throws ResourceNotFoundException {
-
-        if (id == null || id.isEmpty()){
-            throw new IllegalArgumentException("Id is null");
+        if (!StringUtils.hasText(id)) {
+            throw new IllegalArgumentException(ID_NULL);
         }
-        Optional<User> optionalUser = userRepository.findById(id);
 
-        if (optionalUser.isEmpty()){
-            throw new ResourceNotFoundException("User not exists");
-        }
-        return optionalUser.get();
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND));
     }
 
+    /**
+     * -This method allows to get all users
+     * @return A list of all users in the database
+     */
     @Override
-    public List<User> getUsers() throws ResourceNotFoundException {
+    public List<User> getUsers() {
         List<User> users = userRepository.findAll();
-
-        if (users.isEmpty()){
-            throw new ResourceNotFoundException("Users are empty");
-        }
-        return users;
+        return users.isEmpty() ? Collections.emptyList() : users;
     }
 
     /**
      * -This method allows a user to add tickets to a shopping cart.
-     * @param addToCartDTO
-     * @throws ErrorResponseException
+     *
+     * @param addToCartDTO information for to add to cart
+     * @param id user's id
+     * @throws ErrorResponseException if is cannot to add to cart
+     * @throws IllegalArgumentException if addToCartDTO or id are null
      */
     @Override
-    public void addToCart(AddToCartDTO addToCartDTO) throws ErrorResponseException {//
+    public void addToCart(AddToCartDTO addToCartDTO, String id) throws ErrorResponseException, ResourceNotFoundException {//
+        if (addToCartDTO == null || id == null){
+            throw new IllegalArgumentException("parameter is null");
+        }
 
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(id));
+
+        Update update = new Update().addToSet("cartUser", addToCartDTO);
+
+        UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
+
+        if (result.getMatchedCount() == 0) {
+            throw new ResourceNotFoundException(NOT_FOUND);
+        }
+
+        if (result.getModifiedCount() == 0){
+            throw new ErrorResponseException("Failed to add to cart");
+        }
     }
+
 
     /**
      * -This method allows a user to remove tickets from a shopping cart.
-     * @throws NotFoundException
-     * @throws ErrorResponseException
+     * @param userId is the user's id
+     * @param itemId is the item's id
+     * @throws ErrorResponseException if not is cannot to remove from shopping cart
+     * @throws ResourceNotFoundException if a shopping cart is not found
      */
     @Override
-    public void deleteTicketsCart() throws NotFoundException, ErrorResponseException {//
+    public void deleteTicketsCart(String userId, String itemId) throws ResourceNotFoundException, ErrorResponseException {
+        if (!StringUtils.hasText(userId) || !StringUtils.hasText(itemId)) {
+            throw new IllegalArgumentException("User ID and Item ID cannot be null or empty.");
+        }
 
+        // Create a query to find the user by userId
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(userId));
+
+        // Create an update to pull the item from the user's cart
+        Update update = new Update().pull("cartUser", new Query(Criteria.where("_id").is(itemId)));
+
+        // Perform the update operation
+        UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
+
+        // Check if the user was found
+        if (result.getMatchedCount() == 0) {
+            throw new ResourceNotFoundException(NOT_FOUND);
+        }
+
+        // Check if the item was removed from the cart
+        if (result.getModifiedCount() == 0) {
+            throw new ErrorResponseException("Failed to remove item from cart");
+        }
     }
+
 
     /**
      * -This method allows a user to clear the shopping cart.
-     * @throws ErrorResponseException
+     * @throws ErrorResponseException if is cannot clear the shopping cart
      */
     @Override
-    public void clearCart() throws ErrorResponseException {//
+    public void clearCart(String userId) throws ErrorResponseException, ResourceNotFoundException {
+        if (!StringUtils.hasText(userId)) {
+            throw new IllegalArgumentException(ID_NULL);
+        }
 
+        // Create a query to find the user by userId
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(userId));
+
+        // Create an update to clear the cart
+        Update update = new Update().set("userCart", new ArrayList<>());
+
+        // Perform the update operation
+        UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
+
+        // Check if the user was found
+        if (result.getMatchedCount() == 0) {
+            throw new ResourceNotFoundException(NOT_FOUND);
+        }
+
+        // Check if the cart was cleared
+        if (result.getModifiedCount() == 0) {
+            throw new ErrorResponseException("Failed to clear the cart");
+        }
     }
+
 
     /**
      * -This method allows a user to activate his account through a code.
-     * @param id
-     * @throws ErrorResponseException
+     * @param id  is the idUser
+     * @throws ErrorResponseException if is cannot to activate the user's account
      */
     @Override
-    public void activateAccount(String id) throws ErrorResponseException { //
+    public void activateAccount(String id) throws ErrorResponseException, ResourceNotFoundException {
+        if (!StringUtils.hasText(id)) {
+            throw new IllegalArgumentException(ID_NULL);
+        }
 
+        // Create a query to find the user by ID
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(id));
+
+        // Create an update to set the state to ACTIVE
+        Update update = new Update().set("state", State.ACTIVE);
+
+        // Perform the update operation
+        UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
+
+        // Check if the user was found
+        if (result.getMatchedCount() == 0) {
+            throw new ResourceNotFoundException(NOT_FOUND);
+        }
+
+        // Check if the state was updated
+        if (result.getModifiedCount() == 0) {
+            throw new ErrorResponseException("Failed to activate account");
+        }
     }
 
+    /**
+     * -This method allows to delete a user's account
+     * @param id is the idUser
+     * @throws ResourceNotFoundException if user is not found
+     * @throws IllegalArgumentException if id is null
+     * @throws ErrorResponseException if is cannot to delete account
+     */
     @Override
-    public void deleteAccount(String id) {
-        try{
-            if (id == null || id.isEmpty()){
-                throw new IllegalArgumentException("Id is not valid");
-            }
-            Query query = new Query();
-            query.addCriteria(Criteria.where("_id").is(id));
+    public void deleteAccount(String id) throws ResourceNotFoundException, IllegalArgumentException, ErrorResponseException {
+        if (!StringUtils.hasText(id)) {
+            throw new IllegalArgumentException(ID_NULL);
+        }
 
-            // Definir la actualización (modificar solo el campo "nombre")
-            Update update = new Update();
-            update.set("state", State.INACTIVE);
+        // Create a query to find the user by ID
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_id").is(id));
 
-            // Ejecutar la actualización
-            mongoTemplate.updateFirst(query, update, User.class);
-        } catch (MongoException e){
-            e.printStackTrace();
+        // Create an update to set the state to INACTIVE
+        Update update = new Update().set("state", State.INACTIVE);
+
+        // Perform the update operation
+        UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
+
+        // Check if the user was found
+        if (result.getMatchedCount() == 0) {
+            throw new ResourceNotFoundException(NOT_FOUND);
+        }
+
+        // Check if the state was updated
+        if (result.getModifiedCount() == 0) {
+            throw new ErrorResponseException("Failed to deactivate account");
         }
     }
 }
