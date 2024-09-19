@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: msvc-auth
+  mail:
+    password: ihus clmu kvlx vxdp
 
 eureka:
   instance:
