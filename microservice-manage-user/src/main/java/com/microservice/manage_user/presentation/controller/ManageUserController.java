@@ -53,8 +53,9 @@ public class ManageUserController {
      * @throws ResourceNotFoundException Resource not found
      */
     @PostMapping("/profile-edit/{id}")
-    public void profileEdit(@PathVariable String id, @Valid @RequestBody UpdateUserDTO updateUserDTO) throws ResourceNotFoundException {
+    public ResponseEntity<Void> profileEdit(@PathVariable String id, @Valid @RequestBody UpdateUserDTO updateUserDTO) throws ResourceNotFoundException {
         userService.profileEdit(updateUserDTO, id);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -85,9 +86,11 @@ public class ManageUserController {
      * @throws ResourceNotFoundException if is cannot to add to cart
      */
     @PutMapping("/add-to-cart/{id}")
-    public void addToCart(@Valid @RequestBody AddToCartDTO addToCartDTO, @PathVariable String id) throws ResourceNotFoundException {
+    public ResponseEntity<Void> addToCart(@Valid @RequestBody AddToCartDTO addToCartDTO, @PathVariable String id) throws ResourceNotFoundException {
         userService.addToCart(addToCartDTO, id);
+        return ResponseEntity.noContent().build();
     }
+
 
     /**
      * This endpoint is used to run the deleteTicketsCart
@@ -96,8 +99,9 @@ public class ManageUserController {
      * @throws ResourceNotFoundException if is cannot to add to cart
      */
     @PutMapping("/delete-tickets-cart/{userId}/cart/{itemId}")
-    public void deleteTicketsCart(@PathVariable String userId, @PathVariable String itemId) throws ResourceNotFoundException {
+    public ResponseEntity<Void> deleteTicketsCart(@PathVariable String userId, @PathVariable String itemId) throws ResourceNotFoundException {
         userService.deleteTicketsCart(userId, itemId);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -106,8 +110,9 @@ public class ManageUserController {
      * @throws ResourceNotFoundException if is cannot to clear the cart
      */
     @PutMapping("/clear-cart/{userId}")
-    public void clearCart(@PathVariable String userId) throws ResourceNotFoundException {
+    public ResponseEntity<Void> clearCart(@PathVariable String userId) throws ResourceNotFoundException {
         userService.clearCart(userId);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -116,8 +121,9 @@ public class ManageUserController {
      * @throws ResourceNotFoundException if is cannot to activate the account
      */
     @PutMapping("/activate-account/{id}")
-    public void activateAccount(@PathVariable String id) throws ResourceNotFoundException {
+    public ResponseEntity<Void> activateAccount(@PathVariable String id) throws ResourceNotFoundException {
         userService.activateAccount(id);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -125,7 +131,8 @@ public class ManageUserController {
      * @param id User's id
      */
     @PutMapping("/delete-account/{id}")
-    public void deleteAccount(@PathVariable String id) throws ResourceNotFoundException {
+    public ResponseEntity<Void> deleteAccount(@PathVariable String id) throws ResourceNotFoundException {
         userService.deleteAccount(id);
+        return ResponseEntity.noContent().build();
     }
 }
