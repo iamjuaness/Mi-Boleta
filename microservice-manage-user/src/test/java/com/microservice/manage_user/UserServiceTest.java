@@ -204,6 +204,19 @@ class UserServiceTest {
     }
 
     @Test
+    void testLoginThrowsIllegalArgumentExceptionWhenEmailIsEmpty() {
+        // Prepare test data with empty email
+        LoginClientDTO loginClientDTO = new LoginClientDTO("", "password123");
+
+        // Execute the method and verify that an exception is thrown
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
+            userService.login(loginClientDTO);
+        });
+
+        assertEquals("The login DTO and its fields cannot be null or empty.", thrown.getMessage());
+    }
+
+    @Test
     void testLoginThrowsErrorResponseExceptionWhenPasswordIsInvalid() {
         // Prepare test data
         LoginClientDTO loginClientDTO = new LoginClientDTO("pepe@gmail.com", "wrongPassword");
@@ -229,6 +242,20 @@ class UserServiceTest {
 
         assertEquals("Invalid email or password", thrown.getMessage());
     }
+
+    @Test
+    void testLoginThrowsIllegalArgumentExceptionWhenPasswordIsEmpty() {
+        // Prepare test data with empty password
+        LoginClientDTO loginClientDTO = new LoginClientDTO("pepe@gmail.com", "");
+
+        // Execute the method and verify that an exception is thrown
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
+            userService.login(loginClientDTO);
+        });
+
+        assertEquals("The login DTO and its fields cannot be null or empty.", thrown.getMessage());
+    }
+
 
     // ProfileEdit Test
 
