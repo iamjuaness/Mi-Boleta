@@ -17,25 +17,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
-    private final AuthenticationEntryPoint customAuthenticationEntryPoint;
 
-    public SecurityConfig(JwtRequestFilter jwtRequestFilter, AuthenticationEntryPoint customAuthenticationEntryPoint) {
+    public SecurityConfig(JwtRequestFilter jwtRequestFilter) {
         this.jwtRequestFilter = jwtRequestFilter;
-        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/manage-user/signup-client", "/api/manage-user/login-client", "/api/manage-user/get-user/*", "/api/manage-user/get-users", "/api/manage-user/activate-account/*").permitAll()
-                        .requestMatchers("/api/manage-user/profile-edit/*", "/api/manage-user/delete-account/*").hasAnyRole("CLIENT", "ADMIN")
-                        .requestMatchers("/api/manage-user/add-to-cart/*", "/api/manage-user/delete-tickets-cart/*", "/api/manage-user/clear-cart/*").hasRole("CLIENT")
-                        .anyRequest().authenticated()
-                )
-                .exceptionHandling(exceptionHandling -> exceptionHandling
-                        .authenticationEntryPoint(customAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);

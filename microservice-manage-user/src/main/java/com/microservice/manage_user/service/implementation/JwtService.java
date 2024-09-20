@@ -15,6 +15,7 @@ public class JwtService {
 
     public Boolean validateToken(String token) {
         try {
+            System.out.println("No deberia hacer esto de validar");
             // The parser verifies the signature and token format.
             Jwts.parser()
                     .verifyWith(getKey()) // The secret must be the same as the one used to sign the token.
@@ -23,6 +24,17 @@ public class JwtService {
             return true; // If all is well, return true
         } catch (JwtException e){
             return false;
+        }
+    }
+
+    public Jws<Claims> parseJwt(String jwtString) {
+        try {
+            JwtParser jwtParser = Jwts.parser().verifyWith( getKey() ).build();
+            return jwtParser.parseSignedClaims(jwtString);
+        } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
+            e.printStackTrace(); // Imprimir la traza de la excepción para depurar
+            // Manejar la excepción según sea necesario
+            return null; // O devuelve un valor predeterminado o lanza una nueva excepción
         }
     }
 
