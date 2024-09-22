@@ -1,13 +1,16 @@
-package com.microservice.manage_user.presentation.dto;
+package com.microservice.manage_user.presentation.dto.http;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Setter
 @Getter
+@NoArgsConstructor
 public class MessageDTO<T> {
-    private final boolean error;
-    private final T data;
+    private boolean error;
+    private T data;
     private String message;  // Optional field for error messages
     private String errorCode; //Optional field for error codes
 

@@ -7,7 +7,8 @@ import com.microservice.manage_user.presentation.advice.CustomClientException;
 import com.microservice.manage_user.presentation.advice.ResourceNotFoundException;
 import com.microservice.manage_user.presentation.dto.ClientDTO;
 import com.microservice.manage_user.presentation.dto.LoginClientDTO;
-import com.microservice.manage_user.presentation.dto.MessageDTO;
+import com.microservice.manage_user.presentation.dto.StateDTO;
+import com.microservice.manage_user.presentation.dto.http.MessageDTO;
 import com.microservice.manage_user.presentation.dto.RegisterClientDTO;
 import com.microservice.manage_user.service.implementation.UserServiceImpl;
 import jakarta.validation.Valid;
@@ -36,15 +37,15 @@ public class ManageUserNonAuthorizationController {
      * @return ResponseEntity<State>
      */
     @PostMapping(value = "/signup-client", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MessageDTO<State>> signUpClient(@Valid @RequestBody RegisterClientDTO registerClientDTO){
+    public ResponseEntity<MessageDTO<StateDTO>> signUpClient(@Valid @RequestBody RegisterClientDTO registerClientDTO){
         try {
             State state = userService.signUp(registerClientDTO);
 
-            return ResponseEntity.ok().body(new MessageDTO<>(false, state));
+            return ResponseEntity.ok().body(new MessageDTO<>(false, new StateDTO(state, State.INACTIVE, registerClientDTO.idUser())));
         } catch (CustomClientException e){
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, new StateDTO(State.ERROR, null, null), e.getMessage()));
         } catch (Exception e){
-            return ResponseEntity.internalServerError().body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+            return ResponseEntity.internalServerError().body(new MessageDTO<>(true, new StateDTO(State.ERROR, null, null) , e.getMessage()));
         }
     }
 
@@ -60,9 +61,11 @@ public class ManageUserNonAuthorizationController {
             LoginClientDTO loginClientDTO = new LoginClientDTO(emailAddress, password);
             return ResponseEntity.ok().body(new MessageDTO<>(false, userService.login(loginClientDTO)));
         } catch (CustomClientException e){
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, null, e.getMessage()));
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, new ClientDTO("",
+                    "", null,  ""), e.getMessage()));
         } catch (Exception e){
-            return ResponseEntity.internalServerError().body(new MessageDTO<>(true, null, e.getMessage()));
+            return ResponseEntity.internalServerError().body(new MessageDTO<>(true, new ClientDTO("",
+                    "", null,  ""), e.getMessage()));
         }
     }
 
@@ -80,21 +83,59 @@ public class ManageUserNonAuthorizationController {
     /**
      * This endpoint is used to run the getUsers service
      * @return User's list information
-     * @throws ResourceNotFoundException Resource not found
      */
     @GetMapping("/get-users")
-    public ResponseEntity<List<User>> getUsers() throws ResourceNotFoundException {
+    public ResponseEntity<List<User>> getUsers() {
         return ResponseEntity.ok().body(userService.getUsers());
     }
 
     /**
      * This endpoint is used to run the activateAccount service
      * @param id validation code
-     * @throws ResourceNotFoundException if is cannot to activate the account
      */
     @PutMapping("/activate-account/{id}")
-    public ResponseEntity<Void> activateAccount(@PathVariable String id) throws ResourceNotFoundException {
-        userService.activateAccount(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<MessageDTO<State>> activateAccount(@PathVariable String id) {
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, userService.activateAccount(id)));
+        } catch (CustomClientException e){
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        }
     }
+
+    /**
+     * This endpoint is used to run the saveCodeValidation service
+     * @param code validation code
+     * @param id user's id
+     * @return save codeValidation state
+     */
+    @PutMapping("/save-code-validation")
+    public ResponseEntity<MessageDTO<State>> saveCodeValidation(@RequestParam String code, @RequestParam String id){
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, userService.updateCode(code, id)));
+        } catch (CustomClientException e){
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        }
+    }
+
+    /**
+     * This endpoint is used to run validateCode service
+     * @param code validation code
+     * @param idUser user's id
+     * @return validation state
+     */
+    @PutMapping("/validate-code")
+    public ResponseEntity<MessageDTO<State>> validateCode(@RequestParam String code, @RequestParam String idUser){
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, userService.validateCode(code, idUser)));
+        } catch (CustomClientException e){
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        }
+    }
+
 }

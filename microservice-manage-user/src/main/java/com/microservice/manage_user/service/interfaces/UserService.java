@@ -21,6 +21,10 @@ public interface UserService {
 
     void deleteTicketsCart(String userId, String itemId) throws NotFoundException, ErrorResponseException, ResourceNotFoundException;
     void clearCart(String userId) throws ErrorResponseException, ResourceNotFoundException;
-    void activateAccount(String id) throws ErrorResponseException, ResourceNotFoundException;
+    State activateAccount(String id) throws ErrorResponseException, ResourceNotFoundException;
     void deleteAccount(String id) throws ResourceNotFoundException;
+
+    State updateCode(String code, String id);
+
+    State validateCode(String code, String idUser);
 }
