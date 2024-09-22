@@ -19,10 +19,10 @@ public interface ManageUserClient {
    @PostMapping("/signup-client")
    ResponseEntity<MessageDTO<StateDTO>> registerClient(@Valid @RequestBody RegisterClientDTO registerClientDTO);
 
-   @PostMapping("/save-code-validation")
-    ResponseEntity<MessageDTO<State>> saveCodeValidation(@RequestParam("code") String code , @RequestParam("idUser") String idUser);
+   @PutMapping("/save-code-validation")
+    ResponseEntity<MessageDTO<State>> saveCodeValidation(@RequestParam("code") String code , @RequestParam("id") String idUser);
 
-    @PostMapping("/validate-code")
+    @PutMapping("/validate-code")
     ResponseEntity<MessageDTO<State>> validateCode(@RequestParam("code") String code , @RequestParam("idUser") String idUser);
 
     @PutMapping("/activate-account/{id}")

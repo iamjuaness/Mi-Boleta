@@ -48,11 +48,13 @@ public class AuthServiceImpl implements AuthService {
             ResponseEntity<MessageDTO<ClientDTO>> userEntity = manageUserClient.getClient(loginClientDTO.emailAddress(), loginClientDTO.password()) ;
             ClientDTO user = userEntity.getBody().getData();
 
-
             //Verificar que exista ese usuario
             if (user == null) {
                 throw new ResourceNotFoundException("No se ha encontrado un usuario asocioado a la información proporcionada");
             }
+
+            //Verificar que no el usuario esté activo
+            if (user.state() != State.ACTIVE) throw  new Exception("Por favor active su cuenta");
 
             // Crear los atributos del token de autenticación
             Map<String, Object> authToken = new HashMap<>();
@@ -113,8 +115,8 @@ public class AuthServiceImpl implements AuthService {
                             "        <tr>\n" +
                             "            <td style=\"padding: 20px; text-align: center;\">\n" +
                             "                <h1 style=\"color: #EDB017;\">¡Bienvenido Mi Boleta, " + registerUserDto.name() + "!</h1>\n" +
-                            "<img src=\"" + logoUrl + "\" alt=\"Logo de Mi Boleta\" style=\"max-width: 100%; height: auto; margin-bottom: 20px;\" />\n" +
-                            "                <p style=\"font-size: 16px;\">Gracias por registrarte. Estamos emocionados de tenerte con nosotros.</p>  img\n" +
+                            "<img src=\"" + logoUrl + "\" alt=\"Logo de Mi Boleta\" style=\"max-width: 100%; height: 100px; margin-bottom: 20px;\" />\n" +
+                            "                <p style=\"font-size: 16px;\">Gracias por registrarte. Estamos emocionados de tenerte con nosotros.</p>\n" +
                             "                <div style=\"background-color: #ffffff; border-radius: 5px; padding: 20px; margin: 20px 0;\">\n" +
                             "                    <p style=\"font-size: 18px; margin-bottom: 10px;\">Tu código de validación es:</p>\n" +
                             "                    <h2 style=\"color: #400101; font-size: 32px; letter-spacing: 5px; margin: 0;\">" + codeActivation + "</h2>\n" + //

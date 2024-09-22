@@ -33,7 +33,7 @@ public class AuthController {
         return ResponseEntity.ok().body(new MessageAuthDTO<StateDTO>(false, stateRegister));
     }
 
-    @PostMapping
+    @PostMapping(value = "/activation-code")
     public  ResponseEntity<MessageAuthDTO<State>> activeAccount (@RequestParam("code") String code , @RequestParam("idUser") String idUser) throws Exception {
         State stateActiveAccount = authServiceImpl.activationAccount(code,idUser);
         return ResponseEntity.ok().body(new MessageAuthDTO<State>(false, stateActiveAccount));
