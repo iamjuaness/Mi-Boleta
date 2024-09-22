@@ -3,23 +3,18 @@ package com.microservice.auth.service.implementation;
 import com.microservice.auth.client.ManageUserClient;
 import com.microservice.auth.persistence.model.enums.State;
 import com.microservice.auth.presentation.advice.ResourceNotFoundException;
-import com.microservice.auth.presentation.dto.ClientDTO;
-import com.microservice.auth.presentation.dto.HTTP.MessageAuthDTO;
-import com.microservice.auth.presentation.dto.LoginClientDTO;
-import com.microservice.auth.presentation.dto.RegisterClientDTO;
-import com.microservice.auth.presentation.dto.TokenDTO;
+import com.microservice.auth.presentation.dto.*;
+import com.microservice.auth.presentation.dto.HTTP.MessageDTO;
 import com.microservice.auth.service.interfaces.AuthService;
 import com.microservice.auth.utils.ActivationCodeGenerator;
 import com.microservice.auth.utils.JwtUtils;
 import com.microservice.auth.utils.ValidatePassword;
-import io.jsonwebtoken.JwtException;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -50,7 +45,9 @@ public class AuthServiceImpl implements AuthService {
             }
 
             //Buscar el usuario en el msvc UserManage
-            ClientDTO user = manageUserClient.getClient(loginClientDTO.emailAddress(), loginClientDTO.password()) ;
+            ResponseEntity<MessageDTO<ClientDTO>> userEntity = manageUserClient.getClient(loginClientDTO.emailAddress(), loginClientDTO.password()) ;
+            ClientDTO user = userEntity.getBody().getData();
+
 
             //Verificar que exista ese usuario
             if (user == null) {
@@ -75,7 +72,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public MessageAuthDTO registerClient(RegisterClientDTO registerUserDto)throws Exception {
+    public StateDTO registerClient(RegisterClientDTO registerUserDto)throws Exception {
 
         try {
             //Verificar que no esté vacio el formulario de registro
@@ -84,25 +81,64 @@ public class AuthServiceImpl implements AuthService {
             }
             //verificar que sea válida la contraseña con los parametros de seguiridad
             if (validatePassword.validarContrasena(registerUserDto.password()) == false) {
-                System.out.println();
                 throw new IllegalArgumentException("La contraseña no cumple con los parámetros especificados");
             }
             //obtener el estado del registro del mscv manageUser
-            State stateRegister = manageUserClient.registerClient(registerUserDto);
-            System.out.println(stateRegister);
+            ResponseEntity<MessageDTO<StateDTO>> stateResponseEntity = manageUserClient.registerClient(registerUserDto);
+            StateDTO stateRegister = stateResponseEntity.getBody().getData();
 
-            if (stateRegister != State.SUCCESS) {
+
+            if (stateRegister.stateRegister() != State.SUCCESS) {
                 throw new Exception("El estado del registro no es satisfactorio");
             }
 
             //generar código de verificación
             String codeActivation = activationCodeGenerator.generateActivationCode();
-            System.out.println(codeActivation);
+
+
+            //Enviar el codigo de verificación para ser guardado
+            ResponseEntity<MessageDTO<State>> saveCode = manageUserClient.saveCodeValidation(codeActivation, registerUserDto.idUser());
+
+            String logoUrl = "https://res.cloudinary.com/dqgykik8d/image/upload/v1726960044/Mi_boleta_agivea.png";
+            String emailContent =
+                    "<!DOCTYPE html>\n" +
+                            "<html lang=\"es\">\n" +
+                            "<head>\n" +
+                            "    <meta charset=\"UTF-8\">\n" +
+                            "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
+                            "    <title>Bienvenido a Nuestra Aplicación</title>\n" +
+                            "</head>\n" +
+                            "<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;\">\n" +
+                            "    <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #f8f8f8; border-radius: 5px;\">\n" +
+                            "        <tr>\n" +
+                            "            <td style=\"padding: 20px; text-align: center;\">\n" +
+                            "                <h1 style=\"color: #EDB017;\">¡Bienvenido Mi Boleta, " + registerUserDto.name() + "!</h1>\n" +
+                            "<img src=\"" + logoUrl + "\" alt=\"Logo de Mi Boleta\" style=\"max-width: 100%; height: auto; margin-bottom: 20px;\" />\n" +
+                            "                <p style=\"font-size: 16px;\">Gracias por registrarte. Estamos emocionados de tenerte con nosotros.</p>  img\n" +
+                            "                <div style=\"background-color: #ffffff; border-radius: 5px; padding: 20px; margin: 20px 0;\">\n" +
+                            "                    <p style=\"font-size: 18px; margin-bottom: 10px;\">Tu código de validación es:</p>\n" +
+                            "                    <h2 style=\"color: #400101; font-size: 32px; letter-spacing: 5px; margin: 0;\">" + codeActivation + "</h2>\n" + //
+                            "                </div>\n" +
+                            "                <p style=\"font-size: 16px;\">Por favor, utiliza este código para validar tu cuenta en nuestra aplicación.</p>\n" +
+                            "                <p style=\"font-size: 14px; color: #666;\">Si no has solicitado esta cuenta, puedes ignorar este correo.</p>\n" +
+                            "                <div style=\"margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;\">\n" +
+                            "                    <p style=\"font-size: 14px; color: #888;\">\n" +
+                            "                        Si tienes alguna pregunta, no dudes en contactarnos en \n" +
+                            "                        <a href=\"mailto:unilocalsoporte@gmail.com\" style=\"color: #4CAF50;\">unilocalsoporte@gmail.com</a>\n" +
+                            "                    </p>\n" +
+                            "                </div>\n" +
+                            "            </td>\n" +
+                            "        </tr>\n" +
+                            "    </table>\n" +
+                            "</body>\n" +
+                            "</html>";
+
 
             //Enviar email con código
-            mailService.sendMail(registerUserDto.emailAddress(),"Código de autentificación","Bienvenido a Mi boleta, este es su código de verificación de cuenta: " +codeActivation);
+            mailService.sendMail(registerUserDto.emailAddress(),"Código de autentificación", emailContent);
 
-             MessageAuthDTO response = new MessageAuthDTO(false,"Se ha registrado satisfactoriamente, se ha enviado un código de activación a la dirección de correo:" + registerUserDto.emailAddress());
+
+            StateDTO response = new StateDTO(stateRegister.stateRegister(),stateRegister.stateUser(),stateRegister.idUser());
 
              return response;
 
@@ -111,7 +147,7 @@ public class AuthServiceImpl implements AuthService {
             System.out.println(e.getMessage());
         }
 
-        MessageAuthDTO response = new MessageAuthDTO(true,"some went wrong");
+        StateDTO response = new StateDTO(State.ERROR,null,null);
 
         return response;
     }
@@ -120,4 +156,32 @@ public class AuthServiceImpl implements AuthService {
     public TokenDTO loginMod(LoginClientDTO loginClientDTO) throws Exception {
         return null;
     }
+
+    @Override
+    public State activationAccount(String code, String idUser) throws Exception {
+
+        try {
+            if(code == null || code.length() == 0 ) throw new Exception("error  ingrese un código de verifiación");
+
+            // verifica el código
+            ResponseEntity<MessageDTO<State>> stateVerifiactionCode = manageUserClient.validateCode(code,idUser);
+            State stateUser = stateVerifiactionCode.getBody().getData();
+            if (stateUser != State.SUCCESS) throw new Exception("El código no corresponde");
+
+            //activa la cuenta (cambia el estado)
+            ResponseEntity<MessageDTO<State>> stateActivation = manageUserClient.activateAccount(idUser);
+            State stateActive = stateActivation.getBody().getData();
+            if (stateActive != State.SUCCESS){
+                throw new Exception("No se ha podido activar la cuenta");
+            }
+            return stateActive;
+
+        }catch (RuntimeException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+
 }
