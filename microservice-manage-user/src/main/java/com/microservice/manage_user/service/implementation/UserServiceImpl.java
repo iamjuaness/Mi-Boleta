@@ -35,6 +35,7 @@ public class UserServiceImpl implements UserService{
     private static final String NOT_FOUND = "User not found";
     private static final String ID_NULL = "Id is not valid";
     private static final String PARAMETER_NULL = "parameter are not valid";
+    private static final String FAILED_DELETE_ACCOUNT = "Failed to deactivate account";
 
     public UserServiceImpl(UserRepository userRepository, AppUtil appUtil, UserMapper userMapper, PasswordEncoder passwordEncoder, MongoTemplate mongoTemplate) {
         this.userRepository = userRepository;
@@ -109,7 +110,7 @@ public class UserServiceImpl implements UserService{
         }
 
         // Return a ClientDTO with information of the user that is in the database
-        return new ClientDTO(user.getIdUser(), user.getName(), user.getRole(), user.getEmailAddress());
+        return new ClientDTO(user.getIdUser(), user.getName(), user.getRole(), user.getEmailAddress(), user.getState());
     }
 
     /**
@@ -296,7 +297,7 @@ public class UserServiceImpl implements UserService{
      * @throws ErrorResponseException if is cannot to activate the user's account
      */
     @Override
-    public State activateAccount(String id) throws ErrorResponseException, ResourceNotFoundException {
+    public State activateAccount(String id) throws ErrorResponseException {
         try {
             if (!StringUtils.hasText(id)) {
                 throw new IllegalArgumentException(ID_NULL);
@@ -357,7 +358,7 @@ public class UserServiceImpl implements UserService{
 
         // Check if the state was updated
         if (result.getModifiedCount() == 0) {
-            throw new ErrorResponseException("Failed to deactivate account");
+            throw new ErrorResponseException(FAILED_DELETE_ACCOUNT);
         }
     }
 
@@ -386,7 +387,7 @@ public class UserServiceImpl implements UserService{
 
             // Check if the state was updated
             if (result.getModifiedCount() == 0) {
-                throw new ErrorResponseException("Failed to deactivate account");
+                throw new ErrorResponseException("Failed changing code");
             }
 
             return State.SUCCESS;
@@ -416,8 +417,43 @@ public class UserServiceImpl implements UserService{
                 throw new IllegalArgumentException("Code is not valid");
             }
 
+            deleteCode(code, idUser);
+
             return State.SUCCESS;
         } catch (IllegalArgumentException | NullPointerException e){
+            return State.ERROR;
+        }
+    }
+
+    @Override
+    public State deleteCode(String code, String id){
+        try {
+            if (!StringUtils.hasText(code) || !StringUtils.hasText(id)){
+                throw new IllegalArgumentException(PARAMETER_NULL);
+            }
+
+            //Create a query to find the user by id
+            Query query = new Query();
+            query.addCriteria(Criteria.where("_id").is(id));
+
+            //Create an update to set the code
+            Update update = new Update().set("code", null);
+
+            //Perform the update operation
+            UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
+
+            // Check if the user was found
+            if (result.getMatchedCount() == 0) {
+                throw new ResourceNotFoundException(NOT_FOUND);
+            }
+
+            // Check if the state was updated
+            if (result.getModifiedCount() == 0) {
+                throw new ErrorResponseException("Failed delete code");
+            }
+
+            return State.SUCCESS;
+        } catch (IllegalArgumentException | ResourceNotFoundException e){
             return State.ERROR;
         }
     }

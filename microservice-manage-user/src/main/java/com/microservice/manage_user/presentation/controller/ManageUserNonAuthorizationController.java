@@ -62,10 +62,10 @@ public class ManageUserNonAuthorizationController {
             return ResponseEntity.ok().body(new MessageDTO<>(false, userService.login(loginClientDTO)));
         } catch (CustomClientException e){
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, new ClientDTO("",
-                    "", null,  ""), e.getMessage()));
+                    "", null,  "", null), e.getMessage()));
         } catch (Exception e){
             return ResponseEntity.internalServerError().body(new MessageDTO<>(true, new ClientDTO("",
-                    "", null,  ""), e.getMessage()));
+                    "", null,  "", null), e.getMessage()));
         }
     }
 

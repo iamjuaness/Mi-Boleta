@@ -27,4 +27,6 @@ public interface UserService {
     State updateCode(String code, String id);
 
     State validateCode(String code, String idUser);
+
+    State deleteCode(String code, String id);
 }
