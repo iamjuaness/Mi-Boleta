@@ -22,6 +22,7 @@
 		<module>microservicio-gateway</module>
 		<module>microservice-auth</module>
 		<module>microservice-manage-user</module>
+		<module>microservice-manage-event</module>
 	</modules>
 
 
