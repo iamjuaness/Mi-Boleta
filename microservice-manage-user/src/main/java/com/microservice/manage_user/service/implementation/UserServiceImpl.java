@@ -34,6 +34,7 @@ public class UserServiceImpl implements UserService{
 
     private static final String NOT_FOUND = "User not found";
     private static final String ID_NULL = "Id is not valid";
+    private static final String PARAMETER_NULL = "parameter are not valid";
 
     public UserServiceImpl(UserRepository userRepository, AppUtil appUtil, UserMapper userMapper, PasswordEncoder passwordEncoder, MongoTemplate mongoTemplate) {
         this.userRepository = userRepository;
@@ -289,33 +290,40 @@ public class UserServiceImpl implements UserService{
 
     /**
      * -This method allows a user to activate his account through a code.
-     * @param id  is the idUser
+     *
+     * @param id is the idUser
+     * @return state
      * @throws ErrorResponseException if is cannot to activate the user's account
      */
     @Override
-    public void activateAccount(String id) throws ErrorResponseException, ResourceNotFoundException {
-        if (!StringUtils.hasText(id)) {
-            throw new IllegalArgumentException(ID_NULL);
-        }
+    public State activateAccount(String id) throws ErrorResponseException, ResourceNotFoundException {
+        try {
+            if (!StringUtils.hasText(id)) {
+                throw new IllegalArgumentException(ID_NULL);
+            }
 
-        // Create a query to find the user by ID
-        Query query = new Query();
-        query.addCriteria(Criteria.where("_id").is(id));
+            // Create a query to find the user by ID
+            Query query = new Query();
+            query.addCriteria(Criteria.where("_id").is(id));
 
-        // Create an update to set the state to ACTIVE
-        Update update = new Update().set("state", State.ACTIVE);
+            // Create an update to set the state to ACTIVE
+            Update update = new Update().set("state", State.ACTIVE);
 
-        // Perform the update operation
-        UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
+            // Perform the update operation
+            UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
 
-        // Check if the user was found
-        if (result.getMatchedCount() == 0) {
-            throw new ResourceNotFoundException(NOT_FOUND);
-        }
+            // Check if the user was found
+            if (result.getMatchedCount() == 0) {
+                throw new ResourceNotFoundException(NOT_FOUND);
+            }
 
-        // Check if the state was updated
-        if (result.getModifiedCount() == 0) {
-            throw new ErrorResponseException("Failed to activate account");
+            // Check if the state was updated
+            if (result.getModifiedCount() == 0) {
+                throw new ErrorResponseException("Failed to activate account");
+            }
+            return State.SUCCESS;
+        } catch (ResourceNotFoundException | ErrorResponseException e){
+            return State.ERROR;
         }
     }
 
@@ -350,6 +358,67 @@ public class UserServiceImpl implements UserService{
         // Check if the state was updated
         if (result.getModifiedCount() == 0) {
             throw new ErrorResponseException("Failed to deactivate account");
+        }
+    }
+
+    @Override
+    public State updateCode(String code, String id) {
+        try {
+            // Validate parameter are valid
+            if (!StringUtils.hasText(id) || !StringUtils.hasText(code)){
+                throw new IllegalArgumentException(PARAMETER_NULL);
+            }
+
+            //Create a query to find the user by id
+            Query query = new Query();
+            query.addCriteria(Criteria.where("_id").is(id));
+
+            //Create an update to set the code
+            Update update = new Update().set("code", code);
+
+            //Perform the update operation
+            UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
+
+            // Check if the user was found
+            if (result.getMatchedCount() == 0) {
+                throw new ResourceNotFoundException(NOT_FOUND);
+            }
+
+            // Check if the state was updated
+            if (result.getModifiedCount() == 0) {
+                throw new ErrorResponseException("Failed to deactivate account");
+            }
+
+            return State.SUCCESS;
+
+        } catch (ResourceNotFoundException | ErrorResponseException e) {
+            return State.ERROR;
+        }
+    }
+
+    @Override
+    public State validateCode(String code, String idUser) {
+        try {
+            if (!StringUtils.hasText(code) || !StringUtils.hasText(idUser)){
+                throw new IllegalArgumentException(PARAMETER_NULL);
+            }
+
+            Query query = new Query();
+            query.addCriteria(Criteria.where("_id").is(idUser));
+
+            User result = mongoTemplate.findOne(query, User.class);
+
+            if (result == null){
+                throw new NullPointerException(NOT_FOUND);
+            }
+
+            if (!code.equals(result.getCode())){
+                throw new IllegalArgumentException("Code is not valid");
+            }
+
+            return State.SUCCESS;
+        } catch (IllegalArgumentException | NullPointerException e){
+            return State.ERROR;
         }
     }
 }
