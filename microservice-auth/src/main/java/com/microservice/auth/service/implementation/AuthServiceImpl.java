@@ -35,6 +35,7 @@ public class AuthServiceImpl implements AuthService {
         this.mailService = mailService;
     }
 
+
     @Override
     public TokenDTO loginClient(LoginClientDTO loginClientDTO) throws Exception {
 
