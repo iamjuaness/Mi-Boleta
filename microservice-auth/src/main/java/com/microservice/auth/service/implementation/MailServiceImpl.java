@@ -1,9 +1,9 @@
 package com.microservice.auth.service.implementation;
 
+import com.microservice.auth.presentation.advice.ErrorResponseException;
 import com.microservice.auth.service.interfaces.MailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -13,8 +13,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class MailServiceImpl implements MailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+
+    final JavaMailSender mailSender;
+    public MailServiceImpl(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
     @Override
     public void sendMail(String to, String subject, String text) {
@@ -33,8 +36,7 @@ public class MailServiceImpl implements MailService {
             mailSender.send(mimeMessage);
         } catch (MessagingException e) {
             // Manejar excepción
-            System.out.println(e.getMessage());
-            throw new RuntimeException("Error al enviar correo: " + e.getMessage());
+            throw new ErrorResponseException("Error al enviar correo: " + e.getMessage());
         }
     }
 }

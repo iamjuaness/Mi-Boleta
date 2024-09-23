@@ -8,7 +8,6 @@ import com.microservice.auth.presentation.dto.StateDTO;
 import com.microservice.auth.presentation.dto.TokenDTO;
 import com.microservice.auth.service.implementation.AuthServiceImpl;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,8 +16,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    @Autowired
-    AuthServiceImpl authServiceImpl;
+
+    final AuthServiceImpl authServiceImpl;
+    public AuthController(AuthServiceImpl authServiceImpl) {
+        this.authServiceImpl = authServiceImpl;
+    }
 
     @PostMapping(value ="/login-client",produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MessageAuthDTO<TokenDTO>> loginClient(@Valid @RequestBody LoginClientDTO loginClientDTO) throws Exception {

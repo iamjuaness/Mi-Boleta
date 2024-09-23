@@ -12,6 +12,7 @@ import com.microservice.auth.utils.ValidatePassword;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,24 +48,24 @@ public class AuthServiceImpl implements AuthService {
 
             //Buscar el usuario en el msvc UserManage
             ResponseEntity<MessageDTO<ClientDTO>> userEntity = manageUserClient.getClient(loginClientDTO.emailAddress(), loginClientDTO.password()) ;
-            ClientDTO user = userEntity.getBody().getData();
+            MessageDTO<ClientDTO> user = userEntity.getBody();
 
             //Verificar que exista ese usuario
-            if (user == null) {
+            if (user == null || user.getData() == null) {
                 throw new ResourceNotFoundException("No se ha encontrado un usuario asocioado a la información proporcionada");
             }
 
             //Verificar que no el usuario esté activo
-            if (user.state() != State.ACTIVE) throw  new Exception("Por favor active su cuenta");
+            if (user.getData().state() != State.ACTIVE) throw  new IllegalArgumentException("Por favor active su cuenta");
 
             // Crear los atributos del token de autenticación
             Map<String, Object> authToken = new HashMap<>();
-            authToken.put("role", user.role());
-            authToken.put("name", user.name());
-            authToken.put("idUser", user.idUser());
+            authToken.put("role", user.getData().role());
+            authToken.put("name", user.getData().name());
+            authToken.put("idUser", user.getData().idUser());
 
             //generar el token
-                String token = jwtUtilsService.generarToken(user.emailAddress(), authToken);
+                String token = jwtUtilsService.generarToken(user.getData().emailAddress(), authToken);
 
                 // Crear un objeto TokenDto para devolver el token generado
                 return new TokenDTO(token);
@@ -83,16 +84,17 @@ public class AuthServiceImpl implements AuthService {
                 throw new IllegalArgumentException("Por favor ingrese un valor valido");
             }
             //verificar que sea válida la contraseña con los parametros de seguiridad
-            if (validatePassword.validarContrasena(registerUserDto.password()) == false) {
+            if (!validatePassword.validarContrasena(registerUserDto.password())) {
                 throw new IllegalArgumentException("La contraseña no cumple con los parámetros especificados");
             }
             //obtener el estado del registro del mscv manageUser
             ResponseEntity<MessageDTO<StateDTO>> stateResponseEntity = manageUserClient.registerClient(registerUserDto);
-            StateDTO stateRegister = stateResponseEntity.getBody().getData();
+            MessageDTO<StateDTO> stateRegister = stateResponseEntity.getBody();
+            if (stateRegister == null || stateRegister.getData() == null) {throw new NullPointerException("state register not found");}
 
 
-            if (stateRegister.stateRegister() != State.SUCCESS) {
-                throw new Exception("El estado del registro no es satisfactorio");
+            if (stateRegister.getData().stateRegister() != State.SUCCESS) {
+                throw new IllegalArgumentException("El estado del registro no es satisfactorio");
             }
 
             //generar código de verificación
@@ -100,9 +102,11 @@ public class AuthServiceImpl implements AuthService {
 
 
             //Enviar el codigo de verificación para ser guardado
-            ResponseEntity<MessageDTO<State>> saveCode = manageUserClient.saveCodeValidation(codeActivation, registerUserDto.idUser());
+             manageUserClient.saveCodeValidation(codeActivation, registerUserDto.idUser());
+
 
             String logoUrl = "https://res.cloudinary.com/dqgykik8d/image/upload/v1726960044/Mi_boleta_agivea.png";
+
             String emailContent =
                     "<!DOCTYPE html>\n" +
                             "<html lang=\"es\">\n" +
@@ -139,20 +143,16 @@ public class AuthServiceImpl implements AuthService {
 
             //Enviar email con código
             mailService.sendMail(registerUserDto.emailAddress(),"Código de autentificación", emailContent);
+            StateDTO stateDTO = stateRegister.getData();
+
+           return new StateDTO(stateDTO.stateRegister(),stateDTO.stateUser(),stateDTO.idUser());
 
 
-            StateDTO response = new StateDTO(stateRegister.stateRegister(),stateRegister.stateUser(),stateRegister.idUser());
 
-             return response;
+        }catch (IllegalArgumentException | NullPointerException e) {
+           return new StateDTO(State.ERROR,null,null);
 
-        }catch (RuntimeException e) {
-            e.printStackTrace();
-            System.out.println(e.getMessage());
         }
-
-        StateDTO response = new StateDTO(State.ERROR,null,null);
-
-        return response;
     }
 
     @Override
@@ -164,26 +164,28 @@ public class AuthServiceImpl implements AuthService {
     public State activationAccount(String code, String idUser) throws Exception {
 
         try {
-            if(code == null || code.length() == 0 ) throw new Exception("error  ingrese un código de verifiación");
+            if(!StringUtils.hasText(code)) throw new IllegalArgumentException("error  ingrese un código de verifiación");
 
             // verifica el código
             ResponseEntity<MessageDTO<State>> stateVerifiactionCode = manageUserClient.validateCode(code,idUser);
-            State stateUser = stateVerifiactionCode.getBody().getData();
-            if (stateUser != State.SUCCESS) throw new Exception("El código no corresponde");
+            MessageDTO<State> stateUser = stateVerifiactionCode.getBody();
+            if (stateUser == null || stateUser.getData() == null) {throw new NullPointerException("no puede ser nulo");}
+            if (stateUser.getData() != State.SUCCESS) throw new IllegalArgumentException("El código no corresponde");
 
             //activa la cuenta (cambia el estado)
             ResponseEntity<MessageDTO<State>> stateActivation = manageUserClient.activateAccount(idUser);
-            State stateActive = stateActivation.getBody().getData();
-            if (stateActive != State.SUCCESS){
-                throw new Exception("No se ha podido activar la cuenta");
+            MessageDTO<State> stateActive = stateActivation.getBody();
+            if (stateActive == null || stateActive.getData() == null) {throw new NullPointerException("El valor no puede ser nulo");}
+            if (stateActive.getData() != State.SUCCESS){
+                throw new IllegalArgumentException("No se ha podido activar la cuenta");
             }
-            return stateActive;
+            return stateActive.getData();
 
-        }catch (RuntimeException e) {
-            e.printStackTrace();
+        }catch (IllegalArgumentException | NullPointerException e) {
+            return State.ERROR;
         }
 
-        return null;
+
     }
 
 
