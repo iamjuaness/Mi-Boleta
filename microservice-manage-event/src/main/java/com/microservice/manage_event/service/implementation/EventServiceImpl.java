@@ -6,8 +6,14 @@ import com.microservice.manage_event.persistence.repository.EventRepository;
 import com.microservice.manage_event.presentation.advice.ResourceNotFoundException;
 import com.microservice.manage_event.presentation.dto.CreateEventDTO;
 import com.microservice.manage_event.presentation.dto.UpdateEventDTO;
+import com.microservice.manage_event.service.exception.ErrorResponseException;
 import com.microservice.manage_event.service.interfaces.EventService;
 import com.microservice.manage_event.utils.mapper.EventMapper;
+import com.mongodb.client.result.UpdateResult;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -18,14 +24,16 @@ public class EventServiceImpl implements EventService {
 
     final EventRepository eventRepository;
     final EventMapper eventMapper;
+    final MongoTemplate mongoTemplate;
 
     private static final String NOT_FOUND = "Event not found";
     private static final String ID_NOT_VALID = "Id is not valid";
     private static final String PARAMETER_NOT_VALID = "Parameter are not valid";
 
-    public EventServiceImpl(EventRepository eventRepository, EventMapper eventMapper) {
+    public EventServiceImpl(EventRepository eventRepository, EventMapper eventMapper, MongoTemplate mongoTemplate) {
         this.eventRepository = eventRepository;
         this.eventMapper = eventMapper;
+        this.mongoTemplate = mongoTemplate;
     }
 
     /**
@@ -82,9 +90,9 @@ public class EventServiceImpl implements EventService {
     }
 
     /**
-     *
-     * @param createEventDTO
-     * @return
+     * This method is used for createEvent
+     * @param createEventDTO create info event
+     * @return state action
      */
     @Override
     public State createEvent(CreateEventDTO createEventDTO) {
@@ -110,13 +118,94 @@ public class EventServiceImpl implements EventService {
         }
     }
 
+    /**
+     * This method is used for deleteEvent
+     * @param idEvent event's id
+     * @return state action
+     */
     @Override
     public State deleteEvent(String idEvent) {
-        return null;
+        try {
+            if (!StringUtils.hasText(idEvent)){
+                throw new IllegalArgumentException(ID_NOT_VALID);
+            }
+
+            Query query = new Query();
+            query.addCriteria(Criteria.where("_idEvent").is(idEvent));
+
+            Update update = new Update().set("state", State.INACTIVE);
+
+            UpdateResult result = mongoTemplate.updateFirst(query, update, Event.class);
+
+            if (result.getMatchedCount() == 0){
+                throw new ResourceNotFoundException(NOT_FOUND);
+            }
+
+            if (result.getModifiedCount() == 0) {
+                throw new ErrorResponseException("Failed changing code");
+            }
+
+            return State.SUCCESS;
+        } catch (IllegalArgumentException | ResourceNotFoundException | ErrorResponseException e){
+            return State.ERROR;
+        }
     }
 
+    /**
+     * This method is used for updateEvent
+     * @param updateEventDTO update info event
+     * @param id event's id
+     * @return state action
+     */
     @Override
     public State updateEvent(UpdateEventDTO updateEventDTO, String id) {
-        return null;
+        try {
+            // Validates that updateUserDTO is not null
+            if (updateEventDTO == null){
+                throw new IllegalArgumentException("updateEventDTO cannot be null.");
+            }
+
+            if (!StringUtils.hasText(id)){
+                throw new IllegalArgumentException(ID_NOT_VALID);
+            }
+
+            // Gets the event that is in the database
+            Event event = getEvent(id);
+
+            // A boolean variable is defined as needsUpdate and is initializing as false
+            boolean needsUpdate = false;
+
+            // Validates if name of the event changed
+            if (!updateEventDTO.nameEvent().equals(event.getName())) {
+                event.setName(updateEventDTO.nameEvent());
+                needsUpdate = true;
+            }
+
+            // Validates if address of the event changed
+            if (!updateEventDTO.address().equals(event.getAddress())) {
+                event.setAddress(updateEventDTO.address());
+                needsUpdate = true;
+            }
+
+            // Validates if phoneNumber of the event changed
+            if (!updateEventDTO.startDate().equals(event.getStartDate())) {
+                event.setStartDate(updateEventDTO.startDate());
+                needsUpdate = true;
+            }
+
+            // Validate if emailAddress of the event changed
+            if (!updateEventDTO.endDate().equals(event.getEndDate())) {
+                event.setEndDate(updateEventDTO.endDate());
+                needsUpdate = true;
+            }
+
+            // Only saves the information if the parameters changed
+            if (needsUpdate) {
+                eventRepository.save(event);
+            }
+            return State.SUCCESS;
+        } catch (IllegalArgumentException e) {
+            return State.ERROR;
+        }
     }
 }
