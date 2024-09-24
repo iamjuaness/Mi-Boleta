@@ -1,7 +1,6 @@
 package com.microservice.auth.presentation.advice;
 
-import com.microservice.manage_user.presentation.advice.ResourceNotFoundException;
-import com.microservice.manage_user.service.exception.ErrorResponseException;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

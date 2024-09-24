@@ -65,14 +65,19 @@ public class AuthServiceImpl implements AuthService {
             authToken.put("idUser", user.getData().idUser());
 
             //generar el token
-                String token = jwtUtilsService.generarToken(user.getData().emailAddress(), authToken);
+            String token = jwtUtilsService.generarToken(user.getData().emailAddress(), authToken);
+            if (token == null) {
+                throw new IllegalArgumentException("No se ha generado el token correctamente");
+            }
 
-                // Crear un objeto TokenDto para devolver el token generado
-                return new TokenDTO(token);
-        } catch (RuntimeException e) {
-            e.printStackTrace();
+            // Crear un objeto TokenDto para devolver el token generado
+            return new TokenDTO(token);
+
+        }catch (IllegalArgumentException e){
+            throw  e;
+        }catch (ResourceNotFoundException e){
+            throw e;
         }
-        return null;
     }
 
     @Override
