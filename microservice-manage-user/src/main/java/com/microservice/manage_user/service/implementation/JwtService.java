@@ -13,9 +13,12 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
 
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
+    }
+
     public Boolean validateToken(String token) {
         try {
-            System.out.println("No deberia hacer esto de validar");
             // The parser verifies the signature and token format.
             Jwts.parser()
                     .verifyWith(getKey()) // The secret must be the same as the one used to sign the token.

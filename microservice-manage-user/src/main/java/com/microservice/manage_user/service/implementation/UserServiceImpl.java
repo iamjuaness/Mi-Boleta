@@ -362,6 +362,12 @@ public class UserServiceImpl implements UserService{
         }
     }
 
+    /**
+     * This method is used for to upgrade user's code
+     * @param code user's code
+     * @param id user's id
+     * @return state action
+     */
     @Override
     public State updateCode(String code, String id) {
         try {
@@ -397,6 +403,12 @@ public class UserServiceImpl implements UserService{
         }
     }
 
+    /**
+     * This method is used for validate user's code
+     * @param code code to validate
+     * @param idUser user's id
+     * @return state action
+     */
     @Override
     public State validateCode(String code, String idUser) {
         try {
@@ -425,6 +437,12 @@ public class UserServiceImpl implements UserService{
         }
     }
 
+    /**
+     * This method is used for delete user's code
+     * @param code user's code
+     * @param id user's id
+     * @return state action
+     */
     @Override
     public State deleteCode(String code, String id){
         try {
