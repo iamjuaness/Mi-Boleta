@@ -14,5 +14,8 @@ public interface AuthService {
      StateDTO registerClient(RegisterClientDTO registerUserDto) throws Exception;
      TokenDTO loginMod(LoginClientDTO loginClientDTO ) throws Exception;
      State activationAccount (String code , String idUser)throws Exception;
+     State forgotPassword (String emailAddress)throws Exception;
+
+
 }
 

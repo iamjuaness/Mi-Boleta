@@ -25,6 +25,7 @@ public class AuthServiceImpl implements AuthService {
     final ValidatePassword validatePassword;
     final ActivationCodeGenerator activationCodeGenerator;
     final MailServiceImpl mailService;
+    String logoUrl = "https://res.cloudinary.com/dqgykik8d/image/upload/v1726960044/Mi_boleta_agivea.png";
 
 
     public AuthServiceImpl(JwtUtils jwtUtilsService, ManageUserClient manageUserClient, PasswordEncoder passwordEncoder, ValidatePassword validatePassword, ActivationCodeGenerator activationCodeGenerator, MailServiceImpl mailService) {
@@ -110,7 +111,7 @@ public class AuthServiceImpl implements AuthService {
              manageUserClient.saveCodeValidation(codeActivation, registerUserDto.idUser());
 
 
-            String logoUrl = "https://res.cloudinary.com/dqgykik8d/image/upload/v1726960044/Mi_boleta_agivea.png";
+
 
             String emailContent =
                     "<!DOCTYPE html>\n" +
@@ -191,6 +192,65 @@ public class AuthServiceImpl implements AuthService {
         }
 
 
+    }
+
+    @Override
+    public State forgotPassword(String emailAddress) throws Exception {
+        try {
+
+            //Verificar si se ha enviado correctamente el correo electonico
+            if (!StringUtils.hasText(emailAddress)) throw new IllegalArgumentException("error  ingrese un email");
+            ResponseEntity<MessageDTO<ClientDTO>> user = manageUserClient.getClientByEmail(emailAddress);
+            MessageDTO<ClientDTO> clientDTO = user.getBody();
+            if (clientDTO == null || clientDTO.getData() == null) {throw new NullPointerException("no puede ser nulo");}
+
+            //generar el codigo para recuperar contraseña
+            String codeForgotPassword = activationCodeGenerator.generateActivationCode();
+
+            //Enviar el codigo de verificación para ser guardado en la base de datos
+            manageUserClient.saveCodeValidation(codeForgotPassword,clientDTO.getData().idUser());
+
+            String emailContent =
+                    "<!DOCTYPE html>\n" +
+                            "<html lang=\"es\">\n" +
+                            "<head>\n" +
+                            "    <meta charset=\"UTF-8\">\n" +
+                            "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" +
+                            "    <title>Bienvenido a Nuestra Aplicación</title>\n" +
+                            "</head>\n" +
+                            "<body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;\">\n" +
+                            "    <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" style=\"background-color: #f8f8f8; border-radius: 5px;\">\n" +
+                            "        <tr>\n" +
+                            "            <td style=\"padding: 20px; text-align: center;\">\n" +
+                            "                <h1 style=\"color: #EDB017;\">Recuperar mi contraseña"  + "!</h1>\n" +
+                            "<img src=\"" + logoUrl + "\" alt=\"Logo de Mi Boleta\" style=\"max-width: 100%; height: 100px; margin-bottom: 20px;\" />\n" +
+                            "                <p style=\"font-size: 16px;\">"+ clientDTO.getData().name()+" Te hemos enviado el codigo para tu solicitud de recuperar tu contraseña</p>\n "+
+                            "                <div style=\"background-color: #ffffff; border-radius: 5px; padding: 20px; margin: 20px 0;\">\n" +
+                            "                    <p style=\"font-size: 18px; margin-bottom: 10px;\">Tu código de validación es:</p>\n" +
+                            "                    <h2 style=\"color: #400101; font-size: 32px; letter-spacing: 5px; margin: 0;\">" + codeForgotPassword + "</h2>\n" + //
+                            "                </div>\n" +
+                            "                <p style=\"font-size: 16px;\">Por favor, utiliza este código para validar tu cuenta en nuestra aplicación.</p>\n" +
+                            "                <p style=\"font-size: 14px; color: #666;\">Si no has solicitado esta cuenta, puedes ignorar este correo.</p>\n" +
+                            "                <div style=\"margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;\">\n" +
+                            "                    <p style=\"font-size: 14px; color: #888;\">\n" +
+                            "                        Si tienes alguna pregunta, no dudes en contactarnos en \n" +
+                            "                        <a href=\"mailto:unilocalsoporte@gmail.com\" style=\"color: #4CAF50;\">unilocalsoporte@gmail.com</a>\n" +
+                            "                    </p>\n" +
+                            "                </div>\n" +
+                            "            </td>\n" +
+                            "        </tr>\n" +
+                            "    </table>\n" +
+                            "</body>\n" +
+                            "</html>";
+
+            //Enviar email con código
+            mailService.sendMail(clientDTO.getData().emailAddress(),"Código de recuperación de contraseña", emailContent);
+            return State.SUCCESS;
+
+
+        } catch (NullPointerException | IllegalArgumentException e) {
+            return State.ERROR;
+        }
     }
 
 

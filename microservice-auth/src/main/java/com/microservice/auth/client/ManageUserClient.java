@@ -28,5 +28,8 @@ public interface ManageUserClient {
     @PutMapping("/activate-account/{id}")
     ResponseEntity<MessageDTO<State>> activateAccount(@PathVariable String id);
 
+    @GetMapping("/get-user-byEmail/")
+    ResponseEntity<MessageDTO<ClientDTO>> getClientByEmail(@RequestParam("emailAddress")String emailAddress);
+
 
 }
