@@ -683,92 +683,89 @@ class UserServiceTest {
 
     // Activate Account Test
 
+    // 1. Successful activation case
     @Test
-    void testActivateAccountSuccess() throws ErrorResponseException, ResourceNotFoundException {
-        // Prepare test data
-        String userId = "123";
+    void testActivateAccount_Success() throws ErrorResponseException {
+        // Simulate a successful UpdateResult
+        UpdateResult updateResult = mock(UpdateResult.class);
+        when(updateResult.getMatchedCount()).thenReturn(1L); // Simulate that the user was found
+        when(updateResult.getModifiedCount()).thenReturn(1L); // Simulate that the state was successfully modified
 
-        // Create a mock UpdateResult
-        UpdateResult updateResult = Mockito.mock(UpdateResult.class);
-        when(updateResult.getMatchedCount()).thenReturn(1L);
-        when(updateResult.getModifiedCount()).thenReturn(1L);
-
-        // Configure the mock to return the mock UpdateResult
+        // Mock the MongoTemplate to return the expected result
         when(mongoTemplate.updateFirst(any(Query.class), any(Update.class), eq(User.class)))
                 .thenReturn(updateResult);
 
-        // Call the method
-        userService.activateAccount(userId);
+        // Execute the method
+        State result = userService.activateAccount("123456");
 
-        // Verify that updateFirst was called with the correct parameters
+        // Verify the result
+        assertEquals(State.SUCCESS, result);
+        // Verify that the updateFirst method of mongoTemplate was called exactly once
         verify(mongoTemplate, times(1)).updateFirst(any(Query.class), any(Update.class), eq(User.class));
     }
 
+    // 2. Case where ID is null or empty
     @Test
-    void testActivateAccountThrowsResourceNotFoundExceptionWhenUserNotFound() throws ErrorResponseException {
-        // Prepare test data
-        String userId = "123";
+    void testActivateAccount_IdNullOrEmpty() {
+        // Verify that with an empty ID, IllegalArgumentException is thrown
+        assertThrows(IllegalArgumentException.class, () -> userService.activateAccount(""));
 
-        // Create a mock UpdateResult
-        UpdateResult updateResult = Mockito.mock(UpdateResult.class);
+        // Verify that with a null ID, IllegalArgumentException is thrown
+        assertThrows(IllegalArgumentException.class, () -> userService.activateAccount(null));
+    }
+
+    // 3. Case where the user is not found
+    @Test
+    void testActivateAccount_UserNotFound() throws ErrorResponseException {
+        // Simulate an UpdateResult where no user was found (matchedCount is 0)
+        UpdateResult updateResult = mock(UpdateResult.class);
         when(updateResult.getMatchedCount()).thenReturn(0L);
 
-        // Configure the mock to return the mock UpdateResult
+        // Mock the MongoTemplate to return the expected result
         when(mongoTemplate.updateFirst(any(Query.class), any(Update.class), eq(User.class)))
                 .thenReturn(updateResult);
 
-        // Execute the method and verify that the exception is thrown
-        ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> {
-            userService.activateAccount(userId);
-        });
+        // Execute the method and verify it returns State.ERROR
+        State result = userService.activateAccount("123456");
 
-        assertEquals("User not found", thrown.getMessage());
+        assertEquals(State.ERROR, result);
+        // Verify that the updateFirst method was called exactly once
+        verify(mongoTemplate, times(1)).updateFirst(any(Query.class), any(Update.class), eq(User.class));
     }
 
+    // 4. Case where the account activation fails (user found but state not updated)
     @Test
-    void testActivateAccountThrowsErrorResponseExceptionWhenActivationFails() {
-        // Prepare test data
-        String userId = "123";
+    void testActivateAccount_FailedToActivate() throws ErrorResponseException {
+        // Simulate an UpdateResult where the user was found but the state was not modified
+        UpdateResult updateResult = mock(UpdateResult.class);
+        when(updateResult.getMatchedCount()).thenReturn(1L); // User was found
+        when(updateResult.getModifiedCount()).thenReturn(0L); // But state was not updated
 
-        // Create a mock UpdateResult
-        UpdateResult updateResult = Mockito.mock(UpdateResult.class);
-        when(updateResult.getMatchedCount()).thenReturn(1L);
-        when(updateResult.getModifiedCount()).thenReturn(0L);
-
-        // Configure the mock to return the mock UpdateResult
+        // Mock the MongoTemplate to return the expected result
         when(mongoTemplate.updateFirst(any(Query.class), any(Update.class), eq(User.class)))
                 .thenReturn(updateResult);
 
-        // Execute the method and verify that the exception is thrown
-        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> {
-            userService.activateAccount(userId);
-        });
+        // Execute the method and verify it returns State.ERROR
+        State result = userService.activateAccount("123456");
 
-        assertEquals("Failed to activate account", thrown.getMessage());
+        assertEquals(State.ERROR, result);
+        // Verify that the updateFirst method was called exactly once
+        verify(mongoTemplate, times(1)).updateFirst(any(Query.class), any(Update.class), eq(User.class));
     }
 
+    // 5. Case of a custom exception (ErrorResponseException)
     @Test
-    void testActivateAccountThrowsIllegalArgumentExceptionWhenUserIdIsNull() {
-        // Prepare test data
-        String userId = null;
+    void testActivateAccount_ExceptionHandling() throws ErrorResponseException {
+        // Simulate an exception when trying to perform the update in MongoDB
+        when(mongoTemplate.updateFirst(any(Query.class), any(Update.class), eq(User.class)))
+                .thenThrow(new ErrorResponseException("Database error"));
 
-        // Verify that an exception is thrown for null userId
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
-            userService.activateAccount(userId);
-        });
-        assertEquals(ID_NULL, thrown.getMessage());
-    }
+        // Execute the method and verify it returns State.ERROR
+        State result = userService.activateAccount("123456");
 
-    @Test
-    void testActivateAccountThrowsIllegalArgumentExceptionWhenUserIdIsEmpty() {
-        // Prepare test data
-        String userId = "";
-
-        // Verify that an exception is thrown for empty userId
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
-            userService.activateAccount(userId);
-        });
-        assertEquals(ID_NULL, thrown.getMessage());
+        assertEquals(State.ERROR, result);
+        // Verify that the updateFirst method was called exactly once
+        verify(mongoTemplate, times(1)).updateFirst(any(Query.class), any(Update.class), eq(User.class));
     }
 
     // Delete Account Test
@@ -860,4 +857,140 @@ class UserServiceTest {
         });
         assertEquals(ID_NULL, thrown.getMessage());
     }
+
+    // Update code tests
+
+    // 1. Successful code update case
+    @Test
+    void testUpdateCode_Success() throws ErrorResponseException {
+        // Simulate a successful UpdateResult
+        UpdateResult updateResult = mock(UpdateResult.class);
+        when(updateResult.getMatchedCount()).thenReturn(1L); // Simulate user was found
+        when(updateResult.getModifiedCount()).thenReturn(1L); // Simulate code was successfully updated
+
+        // Mock the MongoTemplate to return the expected result
+        when(mongoTemplate.updateFirst(any(Query.class), any(Update.class), eq(User.class)))
+                .thenReturn(updateResult);
+
+        // Execute the method
+        State result = userService.updateCode("ABC123", "123456");
+
+        // Verify the result is SUCCESS
+        assertEquals(State.SUCCESS, result);
+        // Verify that the updateFirst method of mongoTemplate was called exactly once
+        verify(mongoTemplate, times(1)).updateFirst(any(Query.class), any(Update.class), eq(User.class));
+    }
+
+    // 2. Case where ID or code is null or empty
+    @Test
+    void testUpdateCode_IdOrCodeNullOrEmpty() {
+        // Verify IllegalArgumentException is thrown if ID or code is empty or null
+        assertThrows(IllegalArgumentException.class, () -> userService.updateCode("ABC123", ""));
+        assertThrows(IllegalArgumentException.class, () -> userService.updateCode("", "123456"));
+        assertThrows(IllegalArgumentException.class, () -> userService.updateCode("", null));
+    }
+
+    // 3. Case where the user is not found
+    @Test
+    void testUpdateCode_UserNotFound() throws ErrorResponseException {
+        // Simulate UpdateResult where no user was found (matchedCount is 0)
+        UpdateResult updateResult = mock(UpdateResult.class);
+        when(updateResult.getMatchedCount()).thenReturn(0L);
+
+        // Mock the MongoTemplate to return the expected result
+        when(mongoTemplate.updateFirst(any(Query.class), any(Update.class), eq(User.class)))
+                .thenReturn(updateResult);
+
+        // Execute the method and verify it returns State.ERROR
+        State result = userService.updateCode("ABC123", "123456");
+
+        assertEquals(State.ERROR, result);
+        // Verify that the updateFirst method was called exactly once
+        verify(mongoTemplate, times(1)).updateFirst(any(Query.class), any(Update.class), eq(User.class));
+    }
+
+    // 4. Case where the code update fails (user found but code not modified)
+    @Test
+    void testUpdateCode_FailedToUpdateCode() throws ErrorResponseException {
+        // Simulate UpdateResult where user was found but code was not modified
+        UpdateResult updateResult = mock(UpdateResult.class);
+        when(updateResult.getMatchedCount()).thenReturn(1L); // User found
+        when(updateResult.getModifiedCount()).thenReturn(0L); // But code was not updated
+
+        // Mock the MongoTemplate to return the expected result
+        when(mongoTemplate.updateFirst(any(Query.class), any(Update.class), eq(User.class)))
+                .thenReturn(updateResult);
+
+        // Execute the method and verify it returns State.ERROR
+        State result = userService.updateCode("ABC123", "123456");
+
+        assertEquals(State.ERROR, result);
+        // Verify that the updateFirst method was called exactly once
+        verify(mongoTemplate, times(1)).updateFirst(any(Query.class), any(Update.class), eq(User.class));
+    }
+
+    // 5. Case of a custom exception (ErrorResponseException)
+    @Test
+    void testUpdateCode_ExceptionHandling() throws ErrorResponseException {
+        // Simulate an exception when trying to perform the update in MongoDB
+        when(mongoTemplate.updateFirst(any(Query.class), any(Update.class), eq(User.class)))
+                .thenThrow(new ErrorResponseException("Database error"));
+
+        // Execute the method and verify it returns State.ERROR
+        State result = userService.updateCode("ABC123", "123456");
+
+        assertEquals(State.ERROR, result);
+        // Verify that the updateFirst method was called exactly once
+        verify(mongoTemplate, times(1)).updateFirst(any(Query.class), any(Update.class), eq(User.class));
+    }
+
+    // Validate code tests
+
+    @Test
+    void testValidateCode_UserNotFound() {
+        // Simulate no user found by MongoTemplate
+        when(mongoTemplate.findOne(any(Query.class), eq(User.class))).thenReturn(null);
+
+        // Should return ERROR when user is not found (NullPointerException caught)
+        State result = userService.validateCode("ABC123", "123456");
+        assertEquals(State.ERROR, result);
+    }
+
+    @Test
+    void testValidateCode_InvalidCode() {
+        // Simulate a user with a different code
+        User mockUser = new User();
+        mockUser.setCode("DIFFERENT_CODE");
+
+        // Return the mock user
+        when(mongoTemplate.findOne(any(Query.class), eq(User.class))).thenReturn(mockUser);
+
+        // Should return ERROR when code does not match
+        State result = userService.validateCode("ABC123", "123456");
+        assertEquals(State.ERROR, result);
+    }
+
+    // Tests for deleteCode
+
+    @Test
+    void testDeleteCode_UserNotFound() {
+        // Simulate no user found by MongoTemplate
+        when(mongoTemplate.updateFirst(any(Query.class), any(Update.class), eq(User.class)))
+                .thenReturn(UpdateResult.acknowledged(0, 0L, null));
+
+        // Should return ERROR when user is not found (ResourceNotFoundException caught)
+        State result = userService.deleteCode("ABC123", "123456");
+        assertEquals(State.ERROR, result);
+    }
+
+    @Test
+    void testDeleteCode_Success() {
+        // Simular que se actualiza correctamente
+        when(mongoTemplate.updateFirst(any(Query.class), any(Update.class), eq(User.class)))
+                .thenReturn(UpdateResult.acknowledged(1L, 1L, null));
+
+        State result = userService.deleteCode("ABC123", "123456");
+        assertEquals(State.SUCCESS, result);
+    }
+
 }
