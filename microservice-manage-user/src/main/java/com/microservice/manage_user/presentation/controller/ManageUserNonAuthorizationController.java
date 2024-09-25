@@ -4,6 +4,7 @@ import com.microservice.manage_user.persistence.model.entities.User;
 import com.microservice.manage_user.persistence.model.enums.State;
 import com.microservice.manage_user.persistence.repository.UserRepository;
 import com.microservice.manage_user.presentation.advice.CustomClientException;
+import com.microservice.manage_user.presentation.advice.GlobalExceptionHandler;
 import com.microservice.manage_user.presentation.advice.ResourceNotFoundException;
 import com.microservice.manage_user.presentation.dto.ClientDTO;
 import com.microservice.manage_user.presentation.dto.LoginClientDTO;
@@ -76,8 +77,27 @@ public class ManageUserNonAuthorizationController {
      * @throws ResourceNotFoundException Resource not found
      */
     @GetMapping("/get-user/{id}")
-    public ResponseEntity<User> getUser(@PathVariable String id) throws ResourceNotFoundException {
-        return ResponseEntity.ok().body(userService.getUser(id));
+    public ResponseEntity<MessageDTO<User>> getUser(@PathVariable String id) throws ResourceNotFoundException {
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, userService.getUser(id)));
+        } catch (CustomClientException e){
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, new User(), e.getMessage()));
+        } catch (Exception e){
+            return ResponseEntity.internalServerError().body(new MessageDTO<>(true, new User(), e.getMessage()));
+        }
+    }
+
+    @GetMapping("/get-user-byEmail")
+    public ResponseEntity<MessageDTO<ClientDTO>> getUserByEmail(@RequestParam String emailAddress){
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, userService.getUserByEmail(emailAddress)));
+        } catch (CustomClientException e){
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, new ClientDTO("",
+                    "", null,  "", null), e.getMessage()));
+        } catch (Exception e){
+            return ResponseEntity.internalServerError().body(new MessageDTO<>(true, new ClientDTO("",
+                    "", null,  "", null), e.getMessage()));
+        }
     }
 
     /**
@@ -138,4 +158,14 @@ public class ManageUserNonAuthorizationController {
         }
     }
 
+    @PutMapping("/update-password")
+    public ResponseEntity<MessageDTO<State>> updatePassword(@RequestParam String password, @RequestParam String emailAddress){
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, userService.updatePassword(password, emailAddress)));
+        } catch (CustomClientException e){
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        } catch (Exception e){
+            return ResponseEntity.internalServerError().body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        }
+    }
 }

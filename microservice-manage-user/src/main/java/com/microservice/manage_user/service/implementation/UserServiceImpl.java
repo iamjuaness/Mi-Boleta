@@ -22,6 +22,7 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService{
@@ -179,6 +180,29 @@ public class UserServiceImpl implements UserService{
 
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(NOT_FOUND));
+    }
+
+    /**
+     * This method is used for getUserByEmail
+     * @param email user's email
+     * @return clientDTO with info of user
+     */
+    @Override
+    public ClientDTO getUserByEmail(String email){
+        try {
+            if (!StringUtils.hasText(email)){
+                throw new IllegalArgumentException(PARAMETER_NULL);
+            }
+            Optional<User> optionalUser = userRepository.findByEmailAddress(email);
+
+            if (optionalUser.isEmpty()){
+                throw new ResourceNotFoundException(NOT_FOUND);
+            }
+
+            return userMapper.entityToClientDTO(optionalUser.get());
+        } catch (IllegalArgumentException | ResourceNotFoundException e){
+            return new ClientDTO("", "", null, "", null);
+        }
     }
 
     /**
@@ -399,6 +423,40 @@ public class UserServiceImpl implements UserService{
             return State.SUCCESS;
 
         } catch (ResourceNotFoundException | ErrorResponseException e) {
+            return State.ERROR;
+        }
+    }
+
+    /**
+     * This method is used for update user's password
+     * @param password new user's password
+     * @param emailAddress user's email
+     * @return state action
+     */
+    @Override
+    public State updatePassword(String password, String emailAddress){
+        try {
+            if (!StringUtils.hasText(password) || !StringUtils.hasText(emailAddress)){
+                throw new IllegalArgumentException(PARAMETER_NULL);
+            }
+
+            Query query = new Query().addCriteria(Criteria.where("emailAddress").is(emailAddress));
+
+            Update update = new Update().set("password", password);
+
+            UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
+
+            // Check if the user was found
+            if (result.getMatchedCount() == 0) {
+                throw new ResourceNotFoundException(NOT_FOUND);
+            }
+
+            // Check if the state was updated
+            if (result.getModifiedCount() == 0) {
+                throw new ErrorResponseException("Failed update password");
+            }
+            return State.SUCCESS;
+        } catch (IllegalArgumentException | ResourceNotFoundException | ErrorResponseException e){
             return State.ERROR;
         }
     }

@@ -15,6 +15,9 @@ public interface UserService {
     ClientDTO login(LoginClientDTO loginClientDTO) throws ErrorResponseException;
     void profileEdit(UpdateUserDTO updateUserDTO, String id) throws NotFoundException, ResourceNotFoundException;
     User getUser(String id) throws ResourceNotFoundException;
+
+    ClientDTO getUserByEmail(String email);
+
     List<User> getUsers() throws ResourceNotFoundException;
 
     void addToCart(AddToCartDTO addToCartDTO, String id) throws ErrorResponseException, ResourceNotFoundException;
@@ -25,6 +28,8 @@ public interface UserService {
     void deleteAccount(String id) throws ResourceNotFoundException;
 
     State updateCode(String code, String id);
+
+    State updatePassword(String password, String emailAddress);
 
     State validateCode(String code, String idUser);
 
