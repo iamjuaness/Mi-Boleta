@@ -1,12 +1,9 @@
 package com.microservice.auth.presentation.controller;
 
 import com.microservice.auth.persistence.model.enums.State;
+import com.microservice.auth.presentation.dto.*;
 import com.microservice.auth.presentation.dto.HTTP.MessageAuthDTO;
 import com.microservice.auth.presentation.dto.HTTP.MessageDTO;
-import com.microservice.auth.presentation.dto.LoginClientDTO;
-import com.microservice.auth.presentation.dto.RegisterClientDTO;
-import com.microservice.auth.presentation.dto.StateDTO;
-import com.microservice.auth.presentation.dto.TokenDTO;
 import com.microservice.auth.service.implementation.AuthServiceImpl;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -30,24 +27,41 @@ public class AuthController {
     }
 
     @PostMapping(value = "/register-client",produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<MessageAuthDTO<StateDTO>> registerClient(@Valid @RequestBody RegisterClientDTO registerClientDTO) throws Exception {
+    public ResponseEntity<MessageAuthDTO<StateDTO>> registerClient(@Valid @RequestBody RegisterClientDTO registerClientDTO)  {
         StateDTO stateRegister = authServiceImpl.registerClient(registerClientDTO);
 
         return ResponseEntity.ok().body(new MessageAuthDTO<>(false, stateRegister));
     }
 
     @PostMapping(value = "/activation-code")
-    public  ResponseEntity<MessageAuthDTO<State>> activeAccount (@RequestParam("code") String code , @RequestParam("idUser") String idUser) throws Exception {
+    public  ResponseEntity<MessageAuthDTO<State>> activeAccount (@RequestParam("code") String code , @RequestParam("idUser") String idUser)  {
         State stateActiveAccount = authServiceImpl.activationAccount(code,idUser);
         return ResponseEntity.ok().body(new MessageAuthDTO<>(false, stateActiveAccount));
     }
 
     @PostMapping(value = "/forgot-password")
-    public  ResponseEntity<MessageDTO<State>> forgotPassword(@RequestParam("emailAddress") String emailAddress ) throws Exception {
+    public  ResponseEntity<MessageDTO<State>> forgotPassword(@RequestParam("emailAddress") String emailAddress )  {
         State stateCodeForgotPsw = authServiceImpl.forgotPassword(emailAddress);
         if( stateCodeForgotPsw ==State.ERROR) {
-            throw new IllegalArgumentException("El codigo de activación no se ha podido generar");
+            throw new IllegalArgumentException("El código de activación no se ha podido generar");
         }
         return ResponseEntity.ok().body(new MessageDTO<>(false, stateCodeForgotPsw));
+    }
+
+    @PostMapping(value = "/verify-code-forgot-password")
+    public ResponseEntity<MessageDTO<State>> verifyCodeForgotPassword(@RequestParam("code") String code,@RequestParam("emailAddress") String emailAddress)  {
+        State stateVerify = authServiceImpl.verifyForgotPassword(code,emailAddress);
+        if( stateVerify ==State.ERROR) {
+            throw  new IllegalArgumentException("no se ha autorizado la solicitud");
+        }
+        return ResponseEntity.ok().body(new MessageDTO<>(false, stateVerify));
+    }
+    @PatchMapping("/change-password")
+    public ResponseEntity<MessageDTO<TokenDTO>> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO) {
+        TokenDTO token = authServiceImpl.changePassword(changePasswordDTO);
+        if(token ==null) {
+            throw new IllegalArgumentException("No se ha autorizado la solicitud");
+        }
+        return ResponseEntity.ok().body(new MessageDTO<>(false,token));
     }
 }

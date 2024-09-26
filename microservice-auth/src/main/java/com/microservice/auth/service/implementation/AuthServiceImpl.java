@@ -74,15 +74,13 @@ public class AuthServiceImpl implements AuthService {
             // Crear un objeto TokenDto para devolver el token generado
             return new TokenDTO(token);
 
-        }catch (IllegalArgumentException e){
-            throw  e;
-        }catch (ResourceNotFoundException e){
-            throw e;
+        }catch (NullPointerException | IllegalArgumentException e){
+            return new TokenDTO(null);
         }
     }
 
     @Override
-    public StateDTO registerClient(RegisterClientDTO registerUserDto)throws Exception {
+    public StateDTO registerClient(RegisterClientDTO registerUserDto) {
 
         try {
             //Verificar que no esté vacio el formulario de registro
@@ -162,12 +160,12 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public TokenDTO loginMod(LoginClientDTO loginClientDTO) throws Exception {
+    public TokenDTO loginMod(LoginClientDTO loginClientDTO)  {
         return null;
     }
 
     @Override
-    public State activationAccount(String code, String idUser) throws Exception {
+    public State activationAccount(String code, String idUser)  {
 
         try {
             if(!StringUtils.hasText(code)) throw new IllegalArgumentException("error  ingrese un código de verifiación");
@@ -175,7 +173,7 @@ public class AuthServiceImpl implements AuthService {
             // verifica el código
             ResponseEntity<MessageDTO<State>> stateVerifiactionCode = manageUserClient.validateCode(code,idUser);
             MessageDTO<State> stateUser = stateVerifiactionCode.getBody();
-            if (stateUser == null || stateUser.getData() == null) {throw new NullPointerException("no puede ser nulo");}
+            if (stateUser == null || stateUser.getData() == null) {throw new NullPointerException("El usuario no puede ser nulo");}
             if (stateUser.getData() != State.SUCCESS) throw new IllegalArgumentException("El código no corresponde");
 
             //activa la cuenta (cambia el estado)
@@ -195,12 +193,12 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public State forgotPassword(String emailAddress) throws Exception {
+    public State forgotPassword(String emailAddress)  {
         try {
 
             //Verificar si se ha enviado correctamente el correo electonico
             if (!StringUtils.hasText(emailAddress)) throw new IllegalArgumentException("error  ingrese un email");
-            ResponseEntity<MessageDTO<ClientDTO>> user = manageUserClient.getClientByEmail(emailAddress);
+            ResponseEntity<MessageDTO<ClientDTO>> user = manageUserClient.getUserByEmail(emailAddress);
             MessageDTO<ClientDTO> clientDTO = user.getBody();
             if (clientDTO == null || clientDTO.getData() == null) {throw new NullPointerException("no puede ser nulo");}
 
@@ -253,5 +251,99 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public State verifyForgotPassword(String code, String emailAddress)  {
+        try {
+
+            //verificar que el codigo y el correo no vengan  no venga vacio
+            if(!StringUtils.hasText(code) || StringUtils.hasText(emailAddress)) throw new IllegalArgumentException("error  ingrese un código de verifiación o un correo valido");
+
+            //obtener el cliente por su email
+            ResponseEntity<MessageDTO<ClientDTO>> user = manageUserClient.getUserByEmail(emailAddress);
+            MessageDTO<ClientDTO> messageDTO = user.getBody();
+
+            //verificar el cliente se haya encontrado correctamente
+            if (messageDTO == null || messageDTO.getData() == null) {
+                throw new NullPointerException("No se ha encontrado el cliente");
+            }
+
+            // verifica el código
+            ResponseEntity<MessageDTO<State>> messageVerifyCode = manageUserClient.validateCode(code, messageDTO.getData().idUser());
+            MessageDTO<State> stateVerifyCode = messageVerifyCode.getBody();
+            if (stateVerifyCode == null || stateVerifyCode.getData() == null) {throw new NullPointerException("no puede ser nulo");}
+            if (stateVerifyCode.getData() != State.SUCCESS) throw new IllegalArgumentException("El código no corresponde");
+
+            return stateVerifyCode.getData();
+
+        }catch (IllegalArgumentException | NullPointerException e) {
+            return State.ERROR;
+        }
+    }
+
+    @Override
+    public  TokenDTO changePassword(ChangePasswordDTO changePasswordDTO){
+
+        String newPassword= changePasswordDTO.newPassword();
+        String emailAddress = changePasswordDTO.emailAddress();
+
+        try {
+            //Verificar que la contraseña y el correo no vengan vacios
+            if(StringUtils.hasText(newPassword) || StringUtils.hasText(emailAddress)){
+                throw new IllegalArgumentException("la contraseña o el email no puede sre vació");
+            }
+
+            //obtener el usuario de la base de datos por medio del email
+            ResponseEntity<MessageDTO<ClientDTO>> user  = manageUserClient.getUserByEmail(emailAddress);
+            MessageDTO<ClientDTO> messageDTO = user.getBody();
+
+            //verificar que se encontró el usuario
+            if (messageDTO == null || messageDTO.getData() == null) {
+                throw new NullPointerException("No se ha encontrado el cliente");
+            }
+
+            //verificar que el usuario ya haya verificado la cuenta
+            if (messageDTO.getData().state() != State.ACTIVE) {
+                throw  new IllegalArgumentException("no puede cambiar la contraseña de una cuenta inactiva");
+            }
+            //verificar que sea válida la contraseña con los parametros de seguiridad
+            if (!validatePassword.validarContrasena(newPassword)) {
+                throw new IllegalArgumentException("La contraseña no cumple con los parámetros especificados");
+            }
+
+            ClientDTO clientDTO = messageDTO.getData();
+            //verificar que el cliente no sea nulo
+            if (clientDTO == null) throw new IllegalArgumentException("La cliente no puede ser nulo");
+
+            //actualizar la contraseña
+            ResponseEntity<MessageDTO<State>> updatePassword =  manageUserClient.updatePassword(newPassword,emailAddress);
+            MessageDTO<State> stateUpdatePassword = updatePassword.getBody();
+            if (stateUpdatePassword == null || stateUpdatePassword.getData() == null) {
+                throw new NullPointerException("El estado no puede ser nulo");
+            }
+            //verificar que el estado sea satisfactorio
+            if (stateUpdatePassword.getData() != State.SUCCESS) {
+                throw new IllegalArgumentException("No se pudo actualizar la contraseña ");
+            }
+
+            // Crear los atributos del token de autenticación
+            Map<String, Object> authToken = new HashMap<>();
+            authToken.put("role", clientDTO.role());
+            authToken.put("name", clientDTO.name());
+            authToken.put("idUser",clientDTO.idUser());
+
+            //generar el token
+            String token = jwtUtilsService.generarToken(clientDTO.emailAddress(), authToken);
+            if (token == null) {
+                throw new IllegalArgumentException("No se ha generado el token correctamente");
+            }
+
+            // Crear un objeto TokenDto para devolver el token generado
+            return new TokenDTO(token);
+
+        } catch (IllegalArgumentException| NullPointerException e) {
+            return new TokenDTO(null);
+        }
+
+    }
 
 }

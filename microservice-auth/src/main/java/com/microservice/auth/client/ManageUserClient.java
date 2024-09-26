@@ -28,8 +28,14 @@ public interface ManageUserClient {
     @PutMapping("/activate-account/{id}")
     ResponseEntity<MessageDTO<State>> activateAccount(@PathVariable String id);
 
-    @GetMapping("/get-user-byEmail/")
-    ResponseEntity<MessageDTO<ClientDTO>> getClientByEmail(@RequestParam("emailAddress")String emailAddress);
+    @GetMapping("/get-user-byEmail")
+    ResponseEntity<MessageDTO<ClientDTO>> getUserByEmail(@RequestParam String emailAddress);
+
+    @PutMapping("/update-password")
+    ResponseEntity<MessageDTO<State>> updatePassword(@RequestParam String password, @RequestParam String emailAddress);
+
+
+
 
 
 }

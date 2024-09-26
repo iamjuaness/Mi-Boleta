@@ -14,5 +14,6 @@ public record ClientDTO(
         String emailAddress,
         @NotBlank(message = "state is required")
         State state
+
 ) {
 }
