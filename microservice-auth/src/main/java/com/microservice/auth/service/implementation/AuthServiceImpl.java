@@ -255,8 +255,9 @@ public class AuthServiceImpl implements AuthService {
     public State verifyForgotPassword(String code, String emailAddress)  {
         try {
 
+
             //verificar que el codigo y el correo no vengan  no venga vacio
-            if(!StringUtils.hasText(code) || StringUtils.hasText(emailAddress)) throw new IllegalArgumentException("error  ingrese un código de verifiación o un correo valido");
+            if(!StringUtils.hasText(code) || !StringUtils.hasText(emailAddress)) throw new IllegalArgumentException("error  ingrese un código de verifiación o un correo valido");
 
             //obtener el cliente por su email
             ResponseEntity<MessageDTO<ClientDTO>> user = manageUserClient.getUserByEmail(emailAddress);
@@ -266,11 +267,11 @@ public class AuthServiceImpl implements AuthService {
             if (messageDTO == null || messageDTO.getData() == null) {
                 throw new NullPointerException("No se ha encontrado el cliente");
             }
-
             // verifica el código
             ResponseEntity<MessageDTO<State>> messageVerifyCode = manageUserClient.validateCode(code, messageDTO.getData().idUser());
             MessageDTO<State> stateVerifyCode = messageVerifyCode.getBody();
             if (stateVerifyCode == null || stateVerifyCode.getData() == null) {throw new NullPointerException("no puede ser nulo");}
+
             if (stateVerifyCode.getData() != State.SUCCESS) throw new IllegalArgumentException("El código no corresponde");
 
             return stateVerifyCode.getData();
@@ -288,7 +289,7 @@ public class AuthServiceImpl implements AuthService {
 
         try {
             //Verificar que la contraseña y el correo no vengan vacios
-            if(StringUtils.hasText(newPassword) || StringUtils.hasText(emailAddress)){
+            if(!StringUtils.hasText(newPassword) || !StringUtils.hasText(emailAddress)){
                 throw new IllegalArgumentException("la contraseña o el email no puede sre vació");
             }
 

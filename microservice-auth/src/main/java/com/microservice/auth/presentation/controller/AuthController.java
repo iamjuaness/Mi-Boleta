@@ -51,7 +51,7 @@ public class AuthController {
     @PostMapping(value = "/verify-code-forgot-password")
     public ResponseEntity<MessageDTO<State>> verifyCodeForgotPassword(@RequestParam("code") String code,@RequestParam("emailAddress") String emailAddress)  {
         State stateVerify = authServiceImpl.verifyForgotPassword(code,emailAddress);
-        if( stateVerify ==State.ERROR) {
+        if( stateVerify == State.ERROR) {
             throw  new IllegalArgumentException("no se ha autorizado la solicitud");
         }
         return ResponseEntity.ok().body(new MessageDTO<>(false, stateVerify));
