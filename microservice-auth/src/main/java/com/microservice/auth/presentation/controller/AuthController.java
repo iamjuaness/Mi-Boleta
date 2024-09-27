@@ -5,6 +5,11 @@ import com.microservice.auth.presentation.dto.*;
 import com.microservice.auth.presentation.dto.HTTP.MessageAuthDTO;
 import com.microservice.auth.presentation.dto.HTTP.MessageDTO;
 import com.microservice.auth.service.implementation.AuthServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Microservice Auth", description = "this microservice is in charge of handling security-related requests")
 public class AuthController {
 
 
@@ -21,6 +27,34 @@ public class AuthController {
     }
 
     @PostMapping(value ="/login-client",produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(
+            summary = "Login client",
+            description = "this function is responsible for receiving user information, verifying the password and generating an access token. ",
+            tags = {"Login", "Account", "Access"},
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Contain the information of client required for de process of log in ",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = LoginClientDTO.class
+                            )
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "return a token of access",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = MessageAuthDTO.class
+                                    )
+                            )
+
+                    )
+            }
+    )
     public ResponseEntity<MessageAuthDTO<TokenDTO>> loginClient(@Valid @RequestBody LoginClientDTO loginClientDTO) throws Exception {
         TokenDTO token =  authServiceImpl.loginClient(loginClientDTO);
         return ResponseEntity.ok().body(new MessageAuthDTO<>(false, token));
