@@ -100,7 +100,15 @@ public class ManageUserController {
             description = "This endpoint is used to delete a user's account.",
             parameters = {
                     @Parameter(
-                            name = "idUser"
+                            name = "idUser",
+                            description = "User's id",
+                            required = true,
+                            content = @Content(
+                                    mediaType = "String",
+                                    schema = @Schema(
+                                            implementation = String.class
+                                    )
+                            )
                     )
             },
             tags = {"Account"},

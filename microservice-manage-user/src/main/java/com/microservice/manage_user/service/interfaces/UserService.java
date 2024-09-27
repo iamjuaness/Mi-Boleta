@@ -20,6 +20,8 @@ public interface UserService {
 
     List<User> getUsers() throws ResourceNotFoundException;
 
+    List<User> getAllUsers();
+
     void addToCart(AddToCartDTO addToCartDTO, String id) throws ErrorResponseException, ResourceNotFoundException;
 
     void deleteTicketsCart(String userId, String itemId) throws NotFoundException, ErrorResponseException, ResourceNotFoundException;
