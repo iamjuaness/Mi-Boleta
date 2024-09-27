@@ -211,11 +211,21 @@ public class UserServiceImpl implements UserService{
     }
 
     /**
-     * -This method allows to get all users
-     * @return A list of all users in the database
+     * -This method allows to get all active users
+     * @return A list of all active users in the database
      */
     @Override
     public List<User> getUsers() {
+        List<User> users = userRepository.findByState(State.ACTIVE);
+        return users.isEmpty() ? Collections.emptyList() : users;
+    }
+
+    /**
+     * This method is used to get all users
+     * @return A list of all users in the database
+     */
+    @Override
+    public List<User> getAllUsers(){
         List<User> users = userRepository.findAll();
         return users.isEmpty() ? Collections.emptyList() : users;
     }
