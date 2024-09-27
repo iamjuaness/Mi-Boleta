@@ -104,12 +104,8 @@ public class AuthServiceImpl implements AuthService {
             //generar código de verificación
             String codeActivation = activationCodeGenerator.generateActivationCode();
 
-
             //Enviar el codigo de verificación para ser guardado
              manageUserClient.saveCodeValidation(codeActivation, registerUserDto.idUser());
-
-
-
 
             String emailContent =
                     "<!DOCTYPE html>\n" +
@@ -187,6 +183,7 @@ public class AuthServiceImpl implements AuthService {
 
         }catch (IllegalArgumentException | NullPointerException e) {
             return State.ERROR;
+
         }
 
 
@@ -254,8 +251,6 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public State verifyForgotPassword(String code, String emailAddress)  {
         try {
-
-
             //verificar que el codigo y el correo no vengan  no venga vacio
             if(!StringUtils.hasText(code) || !StringUtils.hasText(emailAddress)) throw new IllegalArgumentException("error  ingrese un código de verifiación o un correo valido");
 
@@ -344,7 +339,6 @@ public class AuthServiceImpl implements AuthService {
         } catch (IllegalArgumentException| NullPointerException e) {
             return new TokenDTO(null);
         }
-
     }
 
 }
