@@ -3,7 +3,9 @@ package com.microservice.manage_event.utils.mapper;
 import com.microservice.manage_event.persistence.model.entities.Event;
 import com.microservice.manage_event.persistence.model.enums.State;
 import com.microservice.manage_event.presentation.dto.CreateEventDTO;
+import org.springframework.stereotype.Service;
 
+@Service
 public class EventMapper {
 
 
