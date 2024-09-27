@@ -1,16 +1,27 @@
 package com.microservice.manage_user.presentation.controller;
 
+import com.microservice.manage_user.persistence.model.enums.State;
+import com.microservice.manage_user.presentation.advice.CustomClientException;
 import com.microservice.manage_user.presentation.advice.ResourceNotFoundException;
 import com.microservice.manage_user.presentation.dto.*;
 import com.microservice.manage_user.persistence.repository.UserRepository;
+import com.microservice.manage_user.presentation.dto.http.MessageDTO;
 import com.microservice.manage_user.service.implementation.UserServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
 @RestController
 @RequestMapping("/api/manage-user")
+@Tag(name = "Manage User", description = "Private controller requiring authentication to access your endpoints")
 public class ManageUserController {
 
     final UserRepository userRepository;
@@ -23,59 +34,96 @@ public class ManageUserController {
 
     /**
      * This endpoint is used to run the profileEdit service
-     * @param id User's id
+     * @param idUser User's id
      * @param updateUserDTO DTO with the information required for Update
      * @throws ResourceNotFoundException Resource not found
      */
-    @PostMapping("/profile-edit/{id}")
-    public ResponseEntity<Void> profileEdit(@PathVariable String id, @Valid @RequestBody UpdateUserDTO updateUserDTO) throws ResourceNotFoundException {
-        userService.profileEdit(updateUserDTO, id);
-        return ResponseEntity.noContent().build();
+    @PostMapping("/profile-edit/{idUser}")
+    @Operation(
+            summary = "Edit user's profile",
+            description = "This endpoint is used to edit basic user information.",
+            parameters = {
+                    @Parameter(
+                            name = "idUser",
+                            description = "User's id",
+                            required = true,
+                            content = @Content(
+                                    mediaType = "String",
+                                    schema = @Schema(
+                                            implementation = String.class
+                                    )
+                            )
+                    )
+            },
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "The UpdateUserDTO contains the name, address, phone number, email address.",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = UpdateUserDTO.class
+                            )
+                    )
+            ),
+            tags = {"Profile"},
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Successful edit",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = State.class
+                                    )
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<MessageDTO<State>> profileEdit(@PathVariable String idUser, @Valid @RequestBody UpdateUserDTO updateUserDTO) throws ResourceNotFoundException {
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, userService.profileEdit(updateUserDTO, idUser)));
+        } catch (CustomClientException e){
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        } catch (Exception e){
+            return ResponseEntity.internalServerError().body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        }
     }
 
-    /**
-     * This endpoint is used to run the addToCart service
-     * @param addToCartDTO information for to add to cart
-     * @param id user's id
-     * @throws ResourceNotFoundException if is cannot to add to cart
-     */
-    @PutMapping("/add-to-cart/{id}")
-    public ResponseEntity<Void> addToCart(@Valid @RequestBody AddToCartDTO addToCartDTO, @PathVariable String id) throws ResourceNotFoundException {
-        userService.addToCart(addToCartDTO, id);
-        return ResponseEntity.noContent().build();
-    }
-
-
-    /**
-     * This endpoint is used to run the deleteTicketsCart
-     * @param userId user's id
-     * @param itemId item's id
-     * @throws ResourceNotFoundException if is cannot to add to cart
-     */
-    @PutMapping("/delete-tickets-cart/{userId}/cart/{itemId}")
-    public ResponseEntity<Void> deleteTicketsCart(@PathVariable String userId, @PathVariable String itemId) throws ResourceNotFoundException {
-        userService.deleteTicketsCart(userId, itemId);
-        return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * This endpoint is used to run the clearCart service
-     * @param userId user's id
-     * @throws ResourceNotFoundException if is cannot to clear the cart
-     */
-    @PutMapping("/clear-cart/{userId}")
-    public ResponseEntity<Void> clearCart(@PathVariable String userId) throws ResourceNotFoundException {
-        userService.clearCart(userId);
-        return ResponseEntity.noContent().build();
-    }
 
     /**
      * This endpoint is used to run the deleteAccount service
-     * @param id User's id
+     * @param idUser User's id
      */
-    @PutMapping("/delete-account/{id}")
-    public ResponseEntity<Void> deleteAccount(@PathVariable String id) throws ResourceNotFoundException {
-        userService.deleteAccount(id);
-        return ResponseEntity.noContent().build();
+    @PutMapping("/delete-account/{idUser}")
+    @Operation(
+            summary = "Delete account",
+            description = "This endpoint is used to delete a user's account.",
+            parameters = {
+                    @Parameter(
+                            name = "idUser"
+                    )
+            },
+            tags = {"Account"},
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Successful delete",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = State.class
+                                    )
+                            )
+                    )
+            }
+    )
+    public ResponseEntity<MessageDTO<State>> deleteAccount(@PathVariable String idUser) {
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, userService.deleteAccount(idUser)));
+        } catch (CustomClientException e) {
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        }
     }
 }

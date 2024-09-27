@@ -118,51 +118,56 @@ public class UserServiceImpl implements UserService{
      * -This method allows a user to edit his or her profile information.
      *
      * @param updateUserDTO DTO with the information required for profileEdit
-     * @param id User's id
+     * @param id            User's id
+     * @return state action
      * @throws ResourceNotFoundException if it not founds a user
-     * @throws IllegalArgumentException if updateUserDTO is null
+     * @throws IllegalArgumentException  if updateUserDTO is null
      */
     @Override
-    public void profileEdit(UpdateUserDTO updateUserDTO, String id) throws ResourceNotFoundException, IllegalArgumentException {
+    public State profileEdit(UpdateUserDTO updateUserDTO, String id) throws ResourceNotFoundException, IllegalArgumentException {
+        try {
+            // Validates that updateUserDTO is not null
+            if (updateUserDTO == null){
+                throw new IllegalArgumentException("UpdateUserDTO cannot be null.");
+            }
 
-        // Validates that updateUserDTO is not null
-        if (updateUserDTO == null){
-            throw new IllegalArgumentException("UpdateUserDTO cannot be null.");
-        }
+            // Gets the user that is in the database
+            User user = getUser(id);
 
-        // Gets the user that is in the database
-        User user = getUser(id);
+            // A boolean variable is defined as needsUpdate and is initializing as false
+            boolean needsUpdate = false;
 
-        // A boolean variable is defined as needsUpdate and is initializing as false
-        boolean needsUpdate = false;
+            // Validates if name of the user changed
+            if (!updateUserDTO.name().equals(user.getName())) {
+                user.setName(updateUserDTO.name());
+                needsUpdate = true;
+            }
 
-        // Validates if name of the user changed
-        if (!updateUserDTO.name().equals(user.getName())) {
-            user.setName(updateUserDTO.name());
-            needsUpdate = true;
-        }
+            // Validates if address of the user changed
+            if (!updateUserDTO.address().equals(user.getAddress())) {
+                user.setAddress(updateUserDTO.address());
+                needsUpdate = true;
+            }
 
-        // Validates if address of the user changed
-        if (!updateUserDTO.address().equals(user.getAddress())) {
-            user.setAddress(updateUserDTO.address());
-            needsUpdate = true;
-        }
+            // Validates if phoneNumber of the user changed
+            if (!updateUserDTO.phoneNumber().equals(user.getPhoneNumber())) {
+                user.setPhoneNumber(updateUserDTO.phoneNumber());
+                needsUpdate = true;
+            }
 
-        // Validates if phoneNumber of the user changed
-        if (!updateUserDTO.phoneNumber().equals(user.getPhoneNumber())) {
-            user.setPhoneNumber(updateUserDTO.phoneNumber());
-            needsUpdate = true;
-        }
+            // Validate if emailAddress of the user changed
+            if (!updateUserDTO.emailAddress().equals(user.getEmailAddress())) {
+                user.setEmailAddress(updateUserDTO.emailAddress());
+                needsUpdate = true;
+            }
 
-        // Validate if emailAddress of the user changed
-        if (!updateUserDTO.emailAddress().equals(user.getEmailAddress())) {
-            user.setEmailAddress(updateUserDTO.emailAddress());
-            needsUpdate = true;
-        }
-
-        // Only saves the information if the parameters changed
-        if (needsUpdate) {
-            userRepository.save(user);
+            // Only saves the information if the parameters changed
+            if (needsUpdate) {
+                userRepository.save(user);
+            }
+            return State.SUCCESS;
+        } catch (IllegalArgumentException e){
+            return State.ERROR;
         }
     }
 
@@ -354,35 +359,42 @@ public class UserServiceImpl implements UserService{
 
     /**
      * -This method allows to delete a user's account
+     *
      * @param id is the idUser
+     * @return state action
      * @throws ResourceNotFoundException if user is not found
-     * @throws IllegalArgumentException if id is null
-     * @throws ErrorResponseException if is cannot to delete account
+     * @throws IllegalArgumentException  if id is null
+     * @throws ErrorResponseException    if is cannot to delete account
      */
     @Override
-    public void deleteAccount(String id) throws ResourceNotFoundException, IllegalArgumentException, ErrorResponseException {
-        if (!StringUtils.hasText(id)) {
-            throw new IllegalArgumentException(ID_NULL);
-        }
+    public State deleteAccount(String id) throws IllegalArgumentException, ErrorResponseException {
+        try {
+            if (!StringUtils.hasText(id)) {
+                throw new IllegalArgumentException(ID_NULL);
+            }
 
-        // Create a query to find the user by ID
-        Query query = new Query();
-        query.addCriteria(Criteria.where("_id").is(id));
+            // Create a query to find the user by ID
+            Query query = new Query();
+            query.addCriteria(Criteria.where("_id").is(id));
 
-        // Create an update to set the state to INACTIVE
-        Update update = new Update().set("state", State.INACTIVE);
+            // Create an update to set the state to INACTIVE
+            Update update = new Update().set("state", State.INACTIVE);
 
-        // Perform the update operation
-        UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
+            // Perform the update operation
+            UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
 
-        // Check if the user was found
-        if (result.getMatchedCount() == 0) {
-            throw new ResourceNotFoundException(NOT_FOUND);
-        }
+            // Check if the user was found
+            if (result.getMatchedCount() == 0) {
+                throw new ResourceNotFoundException(NOT_FOUND);
+            }
 
-        // Check if the state was updated
-        if (result.getModifiedCount() == 0) {
-            throw new ErrorResponseException(FAILED_DELETE_ACCOUNT);
+            // Check if the state was updated
+            if (result.getModifiedCount() == 0) {
+                throw new ErrorResponseException(FAILED_DELETE_ACCOUNT);
+            }
+            return State.SUCCESS;
+        } catch (IllegalArgumentException | ResourceNotFoundException | ErrorResponseException e){
+            return State.ERROR;
         }
     }
 
@@ -442,7 +454,7 @@ public class UserServiceImpl implements UserService{
 
             Query query = new Query().addCriteria(Criteria.where("emailAddress").is(emailAddress));
 
-            Update update = new Update().set("password", password);
+            Update update = new Update().set("password", passwordEncoder.encode(password));
 
             UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
 

@@ -13,7 +13,7 @@ public interface UserService {
 
     State signUp(RegisterClientDTO registerClientDTO) throws IllegalStateException;
     ClientDTO login(LoginClientDTO loginClientDTO) throws ErrorResponseException;
-    void profileEdit(UpdateUserDTO updateUserDTO, String id) throws NotFoundException, ResourceNotFoundException;
+    State profileEdit(UpdateUserDTO updateUserDTO, String id) throws NotFoundException, ResourceNotFoundException;
     User getUser(String id) throws ResourceNotFoundException;
 
     ClientDTO getUserByEmail(String email);
@@ -25,7 +25,7 @@ public interface UserService {
     void deleteTicketsCart(String userId, String itemId) throws NotFoundException, ErrorResponseException, ResourceNotFoundException;
     void clearCart(String userId) throws ErrorResponseException, ResourceNotFoundException;
     State activateAccount(String id) throws ErrorResponseException, ResourceNotFoundException;
-    void deleteAccount(String id) throws ResourceNotFoundException;
+    State deleteAccount(String id) throws ResourceNotFoundException;
 
     State updateCode(String code, String id);
 

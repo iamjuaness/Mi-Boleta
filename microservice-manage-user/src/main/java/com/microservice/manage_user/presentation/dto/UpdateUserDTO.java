@@ -17,8 +17,6 @@ public record UpdateUserDTO(
         @NotBlank(message = "emailAddress is required")
         @Email
         @NotEmpty
-        String emailAddress,
-        @NotEmpty
-        String password
+        String emailAddress
 ) {
 }
