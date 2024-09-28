@@ -23,6 +23,7 @@
 		<module>microservice-auth</module>
 		<module>microservice-manage-user</module>
 		<module>microservice-manage-event</module>
+		<module>microservice-pays</module>
 	</modules>
 
 
