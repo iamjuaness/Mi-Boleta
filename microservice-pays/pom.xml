@@ -11,7 +11,7 @@
 	<artifactId>microservice-pays</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>microservice-pays</name>
-	<description>Spring boot micro service pays </description>
+	<description>Spring boot microservice pays </description>
 	<url/>
 	<licenses>
 		<license/>
@@ -52,7 +52,13 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.mercadopago</groupId>
+			<artifactId>sdk-java</artifactId>
+			<version>2.1.29</version>
+		</dependency>
 	</dependencies>
+
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
