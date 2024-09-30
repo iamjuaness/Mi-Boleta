@@ -6,6 +6,7 @@ import com.microservice.manage_event.presentation.dto.CreateEventDTO;
 import com.microservice.manage_event.presentation.dto.UpdateEventDTO;
 import com.microservice.manage_event.presentation.dto.http.MessageDTO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface EventService {
@@ -15,4 +16,5 @@ public interface EventService {
     State createEvent(CreateEventDTO createEventDTO);
     State deleteEvent(String idEvent);
     State updateEvent(UpdateEventDTO updateEventDTO, String id);
+    List<Event> getFilteredEvents(String name, LocalDateTime startDate, LocalDateTime endDate, String address, int capacity);
 }

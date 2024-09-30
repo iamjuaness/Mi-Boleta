@@ -17,6 +17,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -210,5 +211,19 @@ public class EventServiceImpl implements EventService {
         } catch (IllegalArgumentException e) {
             return State.ERROR;
         }
+    }
+
+    /**
+     * This method is used for to filter events
+     * @param name event's name
+     * @param startDate event's startDate
+     * @param endDate event's endDate
+     * @param address event's address
+     * @param capacity event's capacity
+     * @return event's list filtered
+     */
+    @Override
+    public List<Event> getFilteredEvents(String name, LocalDateTime startDate, LocalDateTime endDate, String address, int capacity) {
+        return eventRepository.findEventsByFilters(name, startDate, endDate, address, capacity);
     }
 }
