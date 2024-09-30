@@ -11,3 +11,7 @@ spring:
     client:
       service-url:
         defaultZone: http://localhost:8761/eureka
+
+security:
+  token:
+    access-token: TEST-2515610485462480-092921-6e68461ca9ba25ae748fe51fbf6cd7fc-1547178602
