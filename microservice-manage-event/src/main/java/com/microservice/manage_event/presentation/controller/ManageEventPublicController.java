@@ -2,6 +2,8 @@ package com.microservice.manage_event.presentation.controller;
 
 import com.microservice.manage_event.persistence.model.entities.Event;
 import com.microservice.manage_event.presentation.advice.CustomClientException;
+import com.microservice.manage_event.presentation.dto.GlobalEventStatsDTO;
+import com.microservice.manage_event.presentation.dto.ListEventStatsDTO;
 import com.microservice.manage_event.presentation.dto.http.MessageDTO;
 import com.microservice.manage_event.service.implementation.EventServiceImpl;
 import org.springframework.http.HttpStatus;
@@ -69,6 +71,24 @@ public class ManageEventPublicController {
             @RequestParam(required = false) String address,
             @RequestParam(required = false) Integer capacity) {
 
-        return eventService.getFilteredEvents(name, startDate, endDate, address, capacity != null ? capacity : 0);
+        return eventService.filterEvents(name, startDate, endDate, address, capacity != null ? capacity : 0);
+    }
+
+    /**
+     * This endpoint is used to run getEventStats
+     * @return stats global list
+     */
+    @GetMapping("/general-stats")
+    public List<GlobalEventStatsDTO> getEventStats() {
+        return eventService.getEventStatistics();
+    }
+
+    /**
+     * This endpoint is used to run getEventStatsByEvent
+     * @return stats by event list
+     */
+    @GetMapping("/event-stats")
+    public List<ListEventStatsDTO> getEventStatsByEvent() {
+        return eventService.getStatisticsByEvent();
     }
 }

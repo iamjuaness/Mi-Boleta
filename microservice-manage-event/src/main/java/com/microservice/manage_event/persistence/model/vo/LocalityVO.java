@@ -13,6 +13,6 @@ public class LocalityVO {
     @EqualsAndHashCode.Include
     private String idLocality;
     private String nameLocality;
-    private String capacityLocality;
+    private int capacityLocality;
     private double priceLocality;
 }

@@ -2,9 +2,12 @@ package com.microservice.manage_event.service.implementation;
 
 import com.microservice.manage_event.persistence.model.entities.Event;
 import com.microservice.manage_event.persistence.model.enums.State;
+import com.microservice.manage_event.persistence.model.vo.LocalityVO;
 import com.microservice.manage_event.persistence.repository.EventRepository;
 import com.microservice.manage_event.presentation.advice.ResourceNotFoundException;
 import com.microservice.manage_event.presentation.dto.CreateEventDTO;
+import com.microservice.manage_event.presentation.dto.GlobalEventStatsDTO;
+import com.microservice.manage_event.presentation.dto.ListEventStatsDTO;
 import com.microservice.manage_event.presentation.dto.UpdateEventDTO;
 import com.microservice.manage_event.service.exception.ErrorResponseException;
 import com.microservice.manage_event.service.interfaces.EventService;
@@ -109,6 +112,15 @@ public class EventServiceImpl implements EventService {
 
             // Mapper dto to event
             Event event = eventMapper.createEventDTOToEventEntity(createEventDTO);
+
+            // Calculate total capacity by summing up the capacity of all localities
+            int totalCapacity = createEventDTO.localitiesEvent()
+                    .stream()
+                    .mapToInt(LocalityVO::getCapacityLocality)
+                    .sum();
+
+            // Set the calculated total capacity and initialize ticketsSold to 0
+            event.setCapacity(totalCapacity);
 
             // Save in the repository
             eventRepository.save(event);
@@ -223,7 +235,52 @@ public class EventServiceImpl implements EventService {
      * @return event's list filtered
      */
     @Override
-    public List<Event> getFilteredEvents(String name, LocalDateTime startDate, LocalDateTime endDate, String address, int capacity) {
-        return eventRepository.findEventsByFilters(name, startDate, endDate, address, capacity);
+    public List<Event> filterEvents(String name, LocalDateTime startDate, LocalDateTime endDate, String address, Integer capacity) {
+        Query query = new Query();
+
+        if (name != null && !name.isEmpty()) {
+            String[] nameParts = name.split(" ");
+            Criteria nameCriteria = new Criteria();
+            for (String part : nameParts){
+                nameCriteria.orOperator(Criteria.where("name").regex(part, "i"));
+            }
+            query.addCriteria(nameCriteria);
+        }
+        if (startDate != null) {
+            query.addCriteria(Criteria.where("startDate").gte(startDate));
+        }
+        if (endDate != null) {
+            query.addCriteria(Criteria.where("endDate").lte(endDate));
+        }
+        if (address != null && !address.isEmpty()) {
+            String[] addressParts = address.split(" ");
+            Criteria addressCriteria = new Criteria();
+            for (String part : addressParts) {
+                addressCriteria.orOperator(Criteria.where("address").regex(part, "i")); // Agregar cada parte como condición "OR"
+            }
+            query.addCriteria(addressCriteria);
+        }
+        if (capacity != null) {
+            query.addCriteria(Criteria.where("capacity").gte(capacity));
+        }
+
+        return mongoTemplate.find(query, Event.class);
+    }
+
+    /**
+     * This method is used for get global Event Stats
+     * @return Event's global stats
+     */
+    @Override
+    public List<GlobalEventStatsDTO> getEventStatistics() {
+        return eventRepository.getGlobalEventStats();
+    }
+
+    /**
+     * This method is used for get Stats By Event
+     * @return Event's stats
+     */
+    public List<ListEventStatsDTO> getStatisticsByEvent() {
+        return eventRepository.getEventStatsByEvent();
     }
 }
