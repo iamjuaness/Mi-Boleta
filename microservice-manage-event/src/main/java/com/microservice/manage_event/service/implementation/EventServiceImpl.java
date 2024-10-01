@@ -19,11 +19,11 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 
 @Service
@@ -32,15 +32,17 @@ public class EventServiceImpl implements EventService {
     final EventRepository eventRepository;
     final EventMapper eventMapper;
     final MongoTemplate mongoTemplate;
+    final ImagesServiceImpl imagesService;
 
     private static final String NOT_FOUND = "Event not found";
     private static final String ID_NOT_VALID = "Id is not valid";
     private static final String PARAMETER_NOT_VALID = "Parameter are not valid";
 
-    public EventServiceImpl(EventRepository eventRepository, EventMapper eventMapper, MongoTemplate mongoTemplate) {
+    public EventServiceImpl(EventRepository eventRepository, EventMapper eventMapper, MongoTemplate mongoTemplate, ImagesServiceImpl imagesService) {
         this.eventRepository = eventRepository;
         this.eventMapper = eventMapper;
         this.mongoTemplate = mongoTemplate;
+        this.imagesService = imagesService;
     }
 
     /**
@@ -125,10 +127,32 @@ public class EventServiceImpl implements EventService {
             // Save in the repository
             eventRepository.save(event);
 
+            // Upload images to Cloudinary and get URLs
+            Map<String, String> imageLinks = new HashMap<>();
+
+            if (createEventDTO.images() != null && !createEventDTO.images().isEmpty()) {
+                for (MultipartFile image : createEventDTO.images()) {
+                    // Renombrar el archivo para eliminar la extensión y otros caracteres problemáticos
+                    String originalFilename = image.getOriginalFilename();
+                    String newFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.')).replace(".", "_").replace(" ", "_");
+
+                    // Subir la imagen
+                    Map<?, ?> uploadResult = imagesService.uploadImage(image);
+                    String imageUrl = (String) uploadResult.get("secure_url");
+
+                    // Guardar en el mapa usando el nuevo nombre de archivo
+                    imageLinks.put(newFilename, imageUrl);
+                }
+            }
+
+            event.setImages(imageLinks);
+
+            // Update in the repository
+            eventRepository.save(event);
+
             // return success state
             return State.SUCCESS;
-        } catch (IllegalArgumentException e){
-
+        } catch (IllegalArgumentException | IOException e){
             //return error state
             return State.ERROR;
         }

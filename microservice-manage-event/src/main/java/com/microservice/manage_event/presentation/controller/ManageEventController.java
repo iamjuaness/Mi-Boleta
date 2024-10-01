@@ -14,11 +14,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:4200/")
 @RequestMapping("/api/manage-event")
 @Tag(name = "Manage Event", description = "Private controller requiring authentication to access your endpoints")
 public class ManageEventController {
@@ -34,7 +36,7 @@ public class ManageEventController {
      * @param createEventDTO event info
      * @return state action
      */
-    @PostMapping("/create-event")
+    @PostMapping(value = "/create-event", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(
             summary = "Create Event",
             description = "Create a Event in the platform",
@@ -43,7 +45,7 @@ public class ManageEventController {
                     description = "CreateEventDTO contain the information for create a event",
                     required = true,
                     content = @Content(
-                            mediaType = "application/json",
+                            mediaType = "multipart/form-data",
                             schema = @Schema(
                                     implementation = CreateEventDTO.class
                             )
@@ -92,7 +94,7 @@ public class ManageEventController {
                     )
             }
     )
-    public ResponseEntity<MessageDTO<State>> createEvent(@RequestBody @Valid CreateEventDTO createEventDTO){
+    public ResponseEntity<MessageDTO<State>> createEvent(@ModelAttribute @Valid CreateEventDTO createEventDTO){
         try {
             return ResponseEntity.ok().body(new MessageDTO<>(false, eventService.createEvent(createEventDTO)));
         } catch (CustomClientException e){

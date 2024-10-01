@@ -20,12 +20,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private static final Map<String, String> ROLE_MAP = new HashMap<>();
 
-    static {
-        ROLE_MAP.put("/api/manage-event/**", "CLIENT");
-    }
+//    static {
+//        ROLE_MAP.put("/api/manage-event/**", "CLIENT");
+//    }
 
     private static final String[] PUBLIC_ROUTES = {
-            "/api/public-event/**"
+            "/api/manage-event/**"
     };
 
     public JwtRequestFilter(JwtService jwtService) {

@@ -8,9 +8,11 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -26,9 +28,9 @@ public class Event {
     private String idEvent;
     private String name;
     private State state;
-    private LocalDateTime startDate;
-    private LocalDateTime endDate;
-    private List<String> images;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private Map<String, String> images;
     private List<LocationVO> locations;
     private String address;
     private int capacity;

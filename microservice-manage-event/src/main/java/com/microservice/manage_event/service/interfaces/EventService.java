@@ -5,6 +5,7 @@ import com.microservice.manage_event.persistence.model.enums.State;
 import com.microservice.manage_event.presentation.dto.CreateEventDTO;
 import com.microservice.manage_event.presentation.dto.GlobalEventStatsDTO;
 import com.microservice.manage_event.presentation.dto.UpdateEventDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;

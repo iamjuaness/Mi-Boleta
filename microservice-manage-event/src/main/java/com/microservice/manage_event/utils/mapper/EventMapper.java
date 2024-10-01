@@ -15,7 +15,6 @@ public class EventMapper {
         event.setName(createEventDTO.nameEvent());
         event.setStartDate(createEventDTO.startDate());
         event.setEndDate(createEventDTO.endDate());
-        event.setImages(createEventDTO.images());
         event.setLocations(createEventDTO.locations());
         event.setAddress(createEventDTO.address());
         event.setState(State.ACTIVE);
