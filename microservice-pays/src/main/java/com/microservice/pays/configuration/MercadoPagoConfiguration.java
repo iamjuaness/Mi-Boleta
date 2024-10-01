@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 public class MercadoPagoConfiguration {
 
 
-    @Value("${security.token.acces-token}")
+    @Value("${security.token.access-token}")
     private String accesToken;
 
     @PostConstruct

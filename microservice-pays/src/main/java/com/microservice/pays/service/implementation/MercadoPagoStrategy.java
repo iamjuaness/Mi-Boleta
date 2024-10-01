@@ -21,10 +21,10 @@ public class MercadoPagoStrategy implements PaymentStrategy {
 
 
     public PaymentResponse processPayment(PaymentRequest request) {
-        // Crear el cliente
+        // Crear el cliente de Mercado Pago
         PaymentClient client = new PaymentClient();
 
-        // Crear la solicitud de pago para MercadoPago
+        // Crear la solicitud de pago para Mercado Pago
         PaymentCreateRequest createRequest = PaymentCreateRequest.builder()
                 .transactionAmount(new BigDecimal(request.transactionAmount()))
                 .token(request.cardToken())
@@ -39,8 +39,55 @@ public class MercadoPagoStrategy implements PaymentStrategy {
             Payment payment = client.create(createRequest);
             System.out.println(payment);
 
-            // Mapear Payment a PaymentResponse
-            return mapper.mapPaymentToDTO(payment);
+            // Verificar el estado del pago
+            String status = payment.getStatus();
+            switch (status.toLowerCase()) {
+                case "approved":
+                    // El pago fue aprobado
+                    return mapper.mapPaymentToDTO(payment);
+                case "pending":
+                    // El pago está pendiente
+                    return new PaymentResponse(
+                            payment.getId().toString(),
+                            "pending",
+                            payment.getTransactionAmount().doubleValue(),
+                            payment.getCurrencyId(),
+                            payment.getPaymentMethodId(),
+                            payment.getPayer().getEmail(),
+                            payment.getDescription(),
+                            payment.getDateCreated().toString(),
+                            null,
+                            "El pago está pendiente de confirmación"
+                    );
+                case "rejected":
+                    // El pago fue rechazado
+                    return new PaymentResponse(
+                            payment.getId().toString(),
+                            "rejected",
+                            payment.getTransactionAmount().doubleValue(),
+                            payment.getCurrencyId(),
+                            payment.getPaymentMethodId(),
+                            payment.getPayer().getEmail(),
+                            payment.getDescription(),
+                            payment.getDateCreated().toString(),
+                            null,
+                            "El pago fue rechazado: " + payment.getStatusDetail()
+                    );
+                default:
+                    // Estado no reconocido
+                    return new PaymentResponse(
+                            payment.getId().toString(),
+                            "unknown",
+                            payment.getTransactionAmount().doubleValue(),
+                            payment.getCurrencyId(),
+                            payment.getPaymentMethodId(),
+                            payment.getPayer().getEmail(),
+                            payment.getDescription(),
+                            payment.getDateCreated().toString(),
+                            null,
+                            "Estado del pago no reconocido: " + status
+                    );
+            }
 
         } catch (MPApiException ex) {
             System.out.printf(
