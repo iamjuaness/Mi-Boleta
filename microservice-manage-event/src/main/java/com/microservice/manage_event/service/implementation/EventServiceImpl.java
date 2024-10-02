@@ -410,6 +410,7 @@ public class EventServiceImpl implements EventService {
      * This method is used for get Stats By Event
      * @return Event's stats
      */
+    @Override
     public List<ListEventStatsDTO> getStatisticsByEvent() {
         return eventRepository.getEventStatsByEvent();
     }

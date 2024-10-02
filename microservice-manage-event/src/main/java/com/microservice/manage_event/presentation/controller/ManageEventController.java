@@ -3,7 +3,9 @@ package com.microservice.manage_event.presentation.controller;
 import com.microservice.manage_event.persistence.model.enums.State;
 import com.microservice.manage_event.presentation.advice.CustomClientException;
 import com.microservice.manage_event.presentation.dto.CreateEventDTO;
+import com.microservice.manage_event.presentation.dto.CreateLocalityDTO;
 import com.microservice.manage_event.presentation.dto.UpdateEventDTO;
+import com.microservice.manage_event.presentation.dto.UpdateLocalityDTO;
 import com.microservice.manage_event.presentation.dto.http.MessageDTO;
 import com.microservice.manage_event.service.implementation.EventServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
@@ -263,6 +265,265 @@ public class ManageEventController {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, null, e.getMessage()));
         } catch (Exception e){
             return ResponseEntity.badRequest().body(new MessageDTO<>(true, null, e.getMessage()));
+        }
+    }
+
+    @PostMapping("/create-locality")
+    @Operation(
+            summary = "Create a new locality in an event",
+            description = "Creates a locality in event's localities list",
+            tags = {"CRUD"},
+            parameters = {
+                    @Parameter(
+                            name = "idEvent",
+                            description = "Event's id",
+                            required = true,
+                            content = @Content(
+                                    mediaType = "String",
+                                    schema = @Schema(
+                                            implementation = String.class
+                                    )
+                            )
+                    )
+            },
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "DTO with information of locality",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = CreateLocalityDTO.class
+                            )
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Successful - Create Locality",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = MessageDTO.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "417",
+                            description = "Error - Create Locality",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = MessageDTO.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Bad Request - Invalid input",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = ErrorResponse.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Unauthorized - Authentication failed",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = ErrorResponse.class
+                                    )
+                            )
+                    )
+            }
+
+    )
+    public ResponseEntity<MessageDTO<State>> createLocality(@RequestParam String idEvent, @RequestBody CreateLocalityDTO createLocalityDTO){
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, eventService.createLocality(idEvent, createLocalityDTO)));
+        } catch (CustomClientException e){
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR));
+        } catch (Exception e){
+            return ResponseEntity.badRequest().body(new MessageDTO<>(true, State.ERROR));
+        }
+    }
+
+
+    @DeleteMapping("/delete-locality")
+    @Operation(
+            summary = "Delete a locality in an event",
+            description = "Delete a locality in event's localities list",
+            tags = {"CRUD"},
+            parameters = {
+                    @Parameter(
+                            name = "idEvent",
+                            description = "Event's id",
+                            required = true,
+                            content = @Content(
+                                    mediaType = "String",
+                                    schema = @Schema(
+                                            implementation = String.class
+                                    )
+                            )
+                    ),
+                    @Parameter(
+                            name = "idLocality",
+                            description = "Locality's id",
+                            required = true,
+                            content = @Content(
+                                    mediaType = "String",
+                                    schema = @Schema(
+                                            implementation = String.class
+                                    )
+                            )
+                    )
+            },
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Successful - Delete Locality",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = MessageDTO.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "417",
+                            description = "Error - Delete Locality",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = MessageDTO.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Bad Request - Invalid input",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = ErrorResponse.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Unauthorized - Authentication failed",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = ErrorResponse.class
+                                    )
+                            )
+                    )
+            }
+
+    )
+    public ResponseEntity<MessageDTO<State>> deleteLocality(@RequestParam String idEvent, @RequestParam String idLocality){
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, eventService.deleteLocality(idEvent, idLocality)));
+        } catch (CustomClientException e) {
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageDTO<>(true, State.ERROR));
+        }
+    }
+
+    @PutMapping("/update-locality")
+    @Operation(
+            summary = "Create a new locality in an event",
+            description = "Creates a locality in event's localities list",
+            tags = {"CRUD"},
+            parameters = {
+                    @Parameter(
+                            name = "idEvent",
+                            description = "Event's id",
+                            required = true,
+                            content = @Content(
+                                    mediaType = "String",
+                                    schema = @Schema(
+                                            implementation = String.class
+                                    )
+                            )
+                    ),
+                    @Parameter(
+                            name = "idLocality",
+                            description = "Locality's id",
+                            required = true,
+                            content = @Content(
+                                    mediaType = "String",
+                                    schema = @Schema(
+                                            implementation = String.class
+                                    )
+                            )
+                    )
+            },
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "DTO with information of locality",
+                    required = true,
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = UpdateLocalityDTO.class
+                            )
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Successful - Create Event",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = MessageDTO.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "417",
+                            description = "Error - Create Event",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = MessageDTO.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Bad Request - Invalid input",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = ErrorResponse.class
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "401",
+                            description = "Unauthorized - Authentication failed",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            implementation = ErrorResponse.class
+                                    )
+                            )
+                    )
+            }
+
+    )
+    public ResponseEntity<MessageDTO<State>> updatedLocality(@RequestParam String idEvent, @RequestParam String idLocality, @RequestBody UpdateLocalityDTO updateLocalityDTO){
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, eventService.updateLocality(idEvent, idLocality, updateLocalityDTO)));
+        } catch (CustomClientException e) {
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageDTO<>(true, State.ERROR));
         }
     }
 }

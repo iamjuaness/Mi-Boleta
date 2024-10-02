@@ -20,4 +20,6 @@ public interface EventService {
     State createLocality(String idEvent, CreateLocalityDTO newLocality);
     State deleteLocality(String idEvent, String idLocality);
     State updateLocality(String idEvent, String idLocality, UpdateLocalityDTO updateLocalityDTO);
+
+    List<ListEventStatsDTO> getStatisticsByEvent();
 }
