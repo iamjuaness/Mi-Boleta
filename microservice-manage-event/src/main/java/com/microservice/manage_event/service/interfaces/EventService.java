@@ -2,9 +2,7 @@ package com.microservice.manage_event.service.interfaces;
 
 import com.microservice.manage_event.persistence.model.entities.Event;
 import com.microservice.manage_event.persistence.model.enums.State;
-import com.microservice.manage_event.presentation.dto.CreateEventDTO;
-import com.microservice.manage_event.presentation.dto.GlobalEventStatsDTO;
-import com.microservice.manage_event.presentation.dto.UpdateEventDTO;
+import com.microservice.manage_event.presentation.dto.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -18,6 +16,8 @@ public interface EventService {
     State deleteEvent(String idEvent);
     State updateEvent(UpdateEventDTO updateEventDTO, String id);
     List<Event> filterEvents(String name, LocalDateTime startDate, LocalDateTime endDate, String address, Integer capacity);
-
     List<GlobalEventStatsDTO> getEventStatistics();
+    State createLocality(String idEvent, CreateLocalityDTO newLocality);
+    State deleteLocality(String idEvent, String idLocality);
+    State updateLocality(String idEvent, String idLocality, UpdateLocalityDTO updateLocalityDTO);
 }

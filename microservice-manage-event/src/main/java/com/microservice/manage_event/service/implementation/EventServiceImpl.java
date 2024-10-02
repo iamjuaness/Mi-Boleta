@@ -5,10 +5,7 @@ import com.microservice.manage_event.persistence.model.enums.State;
 import com.microservice.manage_event.persistence.model.vo.LocalityVO;
 import com.microservice.manage_event.persistence.repository.EventRepository;
 import com.microservice.manage_event.presentation.advice.ResourceNotFoundException;
-import com.microservice.manage_event.presentation.dto.CreateEventDTO;
-import com.microservice.manage_event.presentation.dto.GlobalEventStatsDTO;
-import com.microservice.manage_event.presentation.dto.ListEventStatsDTO;
-import com.microservice.manage_event.presentation.dto.UpdateEventDTO;
+import com.microservice.manage_event.presentation.dto.*;
 import com.microservice.manage_event.service.exception.ErrorResponseException;
 import com.microservice.manage_event.service.interfaces.EventService;
 import com.microservice.manage_event.utils.mapper.EventMapper;
@@ -132,15 +129,15 @@ public class EventServiceImpl implements EventService {
 
             if (createEventDTO.images() != null && !createEventDTO.images().isEmpty()) {
                 for (MultipartFile image : createEventDTO.images()) {
-                    // Renombrar el archivo para eliminar la extensión y otros caracteres problemáticos
+                    // Rename the file
                     String originalFilename = image.getOriginalFilename();
                     String newFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.')).replace(".", "_").replace(" ", "_");
 
-                    // Subir la imagen
+                    // Upload image
                     Map<?, ?> uploadResult = imagesService.uploadImage(image);
                     String imageUrl = (String) uploadResult.get("secure_url");
 
-                    // Guardar en el mapa usando el nuevo nombre de archivo
+                    // Add link to the event
                     imageLinks.put(newFilename, imageUrl);
                 }
             }
@@ -298,6 +295,115 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<GlobalEventStatsDTO> getEventStatistics() {
         return eventRepository.getGlobalEventStats();
+    }
+
+    /**
+     * This method is used for create locality in an event
+     * @param idEvent event's id
+     * @param newLocality new locality
+     * @return state action
+     */
+    @Override
+    public State createLocality(String idEvent, CreateLocalityDTO newLocality) {
+
+        Optional<Event> optionalEvent = eventRepository.findById(idEvent);
+
+        if (optionalEvent.isPresent()) {
+            Event event = optionalEvent.get();
+
+            LocalityVO localityVO = eventMapper.createLocalityDTOToLocalityVO(newLocality);
+
+            // Add new locality to the event
+            event.getLocalitiesEvent().add(localityVO);
+
+            // Update the total capacity of event
+            int totalCapacity = event.getLocalitiesEvent()
+                    .stream()
+                    .mapToInt(LocalityVO::getCapacityLocality)
+                    .sum();
+            event.setCapacity(totalCapacity);
+
+            // Save event with new locality
+            eventRepository.save(event);
+            return State.SUCCESS;
+        } else {
+            return State.ERROR;
+        }
+    }
+
+    /**
+     * This method is used for delete an event's locality
+     * @param idEvent event's id
+     * @param idLocality locality's id
+     * @return state action
+     */
+    @Override
+    public State deleteLocality(String idEvent, String idLocality) {
+        Optional<Event> optionalEvent = eventRepository.findById(idEvent);
+
+        if (optionalEvent.isPresent()) {
+            Event event = optionalEvent.get();
+
+            // Delete locality by id
+            boolean removed = event.getLocalitiesEvent().removeIf(loc -> loc.getIdLocality().equals(idLocality));
+
+            if (removed) {
+                // Recalculate the total capacity
+                int totalCapacity = event.getLocalitiesEvent()
+                        .stream()
+                        .mapToInt(LocalityVO::getCapacityLocality)
+                        .sum();
+                event.setCapacity(totalCapacity);
+
+                eventRepository.save(event);
+                return State.SUCCESS;
+            }
+        }
+        return State.ERROR;
+    }
+
+    /**
+     * This method is used for updateLocality in an event
+     * @param idEvent event's id
+     * @param idLocality locality's id
+     * @param updatedLocalityDTO updated localityDTO
+     * @return state action
+     */
+    @Override
+    public State updateLocality(String idEvent, String idLocality, UpdateLocalityDTO updatedLocalityDTO) {
+        if (!StringUtils.hasText(idEvent) || !StringUtils.hasText(idLocality)){
+            throw new IllegalArgumentException(PARAMETER_NOT_VALID);
+        }
+
+        Optional<Event> optionalEvent = eventRepository.findById(idEvent);
+
+        if (optionalEvent.isPresent()) {
+            Event event = optionalEvent.get();
+
+            // Search locality to modify
+            LocalityVO locality = event.getLocalitiesEvent().stream()
+                    .filter(loc -> loc.getIdLocality().equals(idLocality))
+                    .findFirst()
+                    .orElse(null);
+
+            if (locality != null) {
+                // Update values of the locality
+                locality.setNameLocality(updatedLocalityDTO.nameLocality());
+                locality.setCapacityLocality(updatedLocalityDTO.capacityLocality());
+                locality.setPriceLocality(updatedLocalityDTO.priceLocality());
+
+                // Recalculate the total capacity of the event
+                int totalCapacity = event.getLocalitiesEvent()
+                        .stream()
+                        .mapToInt(LocalityVO::getCapacityLocality)
+                        .sum();
+                event.setCapacity(totalCapacity);
+
+                eventRepository.save(event);
+                return State.SUCCESS;
+            }
+        }
+        return State.ERROR;
     }
 
     /**
