@@ -14,13 +14,11 @@ public class EventMapper {
     public Event createEventDTOToEventEntity(CreateEventDTO createEventDTO){
         Event event = new Event();
 
-        event.setName(createEventDTO.nameEvent());
-        event.setStartDate(createEventDTO.startDate());
-        event.setEndDate(createEventDTO.endDate());
-        event.setLocations(createEventDTO.locations());
-        event.setAddress(createEventDTO.address());
+        event.setName(createEventDTO.getNameEvent());
+        event.setStartDate(createEventDTO.getStartDateAsLocalDate());
+        event.setEndDate(createEventDTO.getEndDateAsLocalDate());
+        event.setAddress(createEventDTO.getAddress());
         event.setState(State.ACTIVE);
-        event.setLocalitiesEvent(createEventDTO.localitiesEvent());
 
         return event;
     }

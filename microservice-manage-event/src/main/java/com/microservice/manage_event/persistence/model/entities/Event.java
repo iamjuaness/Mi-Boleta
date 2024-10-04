@@ -9,8 +9,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +29,7 @@ public class Event {
     private LocalDate startDate;
     private LocalDate endDate;
     private Map<String, String> images;
-    private List<LocationVO> locations;
+    private LocationVO locations;
     private String address;
     private int capacity;
     private int ticketsSold;
