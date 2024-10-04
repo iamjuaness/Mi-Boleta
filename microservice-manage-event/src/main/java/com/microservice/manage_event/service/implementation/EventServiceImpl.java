@@ -3,6 +3,7 @@ package com.microservice.manage_event.service.implementation;
 import com.microservice.manage_event.persistence.model.entities.Event;
 import com.microservice.manage_event.persistence.model.enums.State;
 import com.microservice.manage_event.persistence.model.vo.LocalityVO;
+import com.microservice.manage_event.persistence.model.vo.LocationVO;
 import com.microservice.manage_event.persistence.repository.EventRepository;
 import com.microservice.manage_event.presentation.advice.ResourceNotFoundException;
 import com.microservice.manage_event.presentation.dto.*;
@@ -101,7 +102,7 @@ public class EventServiceImpl implements EventService {
      * @return state action
      */
     @Override
-    public State createEvent(CreateEventDTO createEventDTO) {
+    public State createEvent(CreateEventDTO createEventDTO, LocationVO location, List<LocalityVO> localities) {
         try {
 
             // Validate createEventDto is not null
@@ -111,9 +112,11 @@ public class EventServiceImpl implements EventService {
 
             // Mapper dto to event
             Event event = eventMapper.createEventDTOToEventEntity(createEventDTO);
+            event.setLocations(location);
+            event.setLocalitiesEvent(localities);
 
             // Calculate total capacity by summing up the capacity of all localities
-            int totalCapacity = createEventDTO.localitiesEvent()
+            int totalCapacity = localities
                     .stream()
                     .mapToInt(LocalityVO::getCapacityLocality)
                     .sum();
@@ -127,8 +130,8 @@ public class EventServiceImpl implements EventService {
             // Upload images to Cloudinary and get URLs
             Map<String, String> imageLinks = new HashMap<>();
 
-            if (createEventDTO.images() != null && !createEventDTO.images().isEmpty()) {
-                for (MultipartFile image : createEventDTO.images()) {
+            if (createEventDTO.getImages() != null && !createEventDTO.getImages().isEmpty()) {
+                for (MultipartFile image : createEventDTO.getImages()) {
                     // Rename the file
                     String originalFilename = image.getOriginalFilename();
                     String newFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.')).replace(".", "_").replace(" ", "_");

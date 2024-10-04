@@ -1,6 +1,8 @@
 package com.microservice.manage_event.presentation.controller;
 
 import com.microservice.manage_event.persistence.model.enums.State;
+import com.microservice.manage_event.persistence.model.vo.LocalityVO;
+import com.microservice.manage_event.persistence.model.vo.LocationVO;
 import com.microservice.manage_event.presentation.advice.CustomClientException;
 import com.microservice.manage_event.presentation.dto.CreateEventDTO;
 import com.microservice.manage_event.presentation.dto.CreateLocalityDTO;
@@ -20,6 +22,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200/")
@@ -98,7 +102,13 @@ public class ManageEventController {
     )
     public ResponseEntity<MessageDTO<State>> createEvent(@ModelAttribute @Valid CreateEventDTO createEventDTO){
         try {
-            return ResponseEntity.ok().body(new MessageDTO<>(false, eventService.createEvent(createEventDTO)));
+            // Validate that images are present
+            if (createEventDTO.getImages() == null || createEventDTO.getImages().isEmpty()) {
+                return ResponseEntity.badRequest().body(new MessageDTO<>(true, State.ERROR, "Images are required"));
+            }
+            LocationVO location = createEventDTO.getLocationObject();
+            List<LocalityVO> localities = createEventDTO.getLocalitiesEventObjects();
+            return ResponseEntity.ok().body(new MessageDTO<>(false, eventService.createEvent(createEventDTO, location, localities)));
         } catch (CustomClientException e){
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
         } catch (Exception e){
