@@ -5,6 +5,7 @@ import com.microservice.pays.presentation.dto.PaymentResponse;
 import com.microservice.pays.service.interfaces.PaymentService;
 import com.microservice.pays.service.interfaces.PaymentStrategy;
 import com.microservice.pays.utils.PaymentStrategyFactory;
+import com.stripe.exception.StripeException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -21,7 +22,7 @@ public class PaymentServiceImpl implements PaymentService {
 
 
     @Override
-    public PaymentResponse createPayment(PaymentRequest paymentRequest, String strategyId) {
+    public PaymentResponse createPayment(PaymentRequest paymentRequest, String strategyId) throws StripeException {
 
         if(paymentRequest == null && !StringUtils.hasText(strategyId)) {
             throw new IllegalArgumentException("PaymentRequest cannot be null or empty");

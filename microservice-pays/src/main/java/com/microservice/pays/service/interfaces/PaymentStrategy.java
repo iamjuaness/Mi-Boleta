@@ -2,6 +2,7 @@ package com.microservice.pays.service.interfaces;
 
 import com.microservice.pays.presentation.dto.PaymentRequest;
 import com.microservice.pays.presentation.dto.PaymentResponse;
+import com.stripe.exception.StripeException;
 
 public interface PaymentStrategy {
 
@@ -10,7 +11,7 @@ public interface PaymentStrategy {
      * @param request Datos del pago como monto, token, descripción, etc.
      * @return Un objeto PaymentResponse con el resultado del procesamiento.
      */
-    PaymentResponse processPayment(PaymentRequest request);
+    PaymentResponse processPayment(PaymentRequest request) throws StripeException;
 
     // Validar la información del pago
     boolean validatePaymentDetails(String paymentDetails);
