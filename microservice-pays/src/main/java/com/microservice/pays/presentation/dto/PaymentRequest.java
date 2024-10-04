@@ -4,16 +4,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+
 public record PaymentRequest(
-        @NotNull(message = "Transaction amount cannot be null")
-        @Positive(message = "Transaction amount must be positive")
-        Long transactionAmount,
+        @NotNull(message = "Purchase order cannot be null")
+        PurchaseOrderDTO purchaseOrderDTO,
 
-        @NotBlank(message = "Description cannot be blank")
-        String description,
-
-
-        @NotBlank(message = "Payer email cannot be blank")
-        String payerEmail
+        @NotBlank(message = "Strategy ID cannot be blank")
+        String strategyId
 ) {
 }

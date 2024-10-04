@@ -18,7 +18,7 @@ public class PaymentController {
     public PaymentController(PaymentServiceImpl paymentService) {
         this.paymentService = paymentService;
     }
-
+    @CrossOrigin(origins = "http://localhost:4200")
     @PostMapping(value = "/pay")
     public ResponseEntity<MessageDTO<PaymentResponse>>  pay(@RequestBody PaymentRequest paymentRequest, @RequestParam String strategyId) throws StripeException {
        PaymentResponse paymentResponse = paymentService.createPayment(paymentRequest,strategyId);

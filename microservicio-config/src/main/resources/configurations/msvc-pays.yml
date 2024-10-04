@@ -16,4 +16,4 @@ security:
   token:
     access-token: TEST-2515610485462480-092921-6e68461ca9ba25ae748fe51fbf6cd7fc-1547178602
   tokenStripe:
-    access-token: sk_test_51Q5dZNFGVkZEhLlAvhLlMFqLWoLjbV4DHOoHaE1boCjRftEcyo2Y4KE4XGhCLkT49iaEiY6pKv1v274suVTwIuQ100Mr2iIONg
+    tokenSecret: sk_test_51Q5dZNFGVkZEhLlAvhLlMFqLWoLjbV4DHOoHaE1boCjRftEcyo2Y4KE4XGhCLkT49iaEiY6pKv1v274suVTwIuQ100Mr2iIONg
