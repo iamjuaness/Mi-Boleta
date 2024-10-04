@@ -22,14 +22,14 @@ public class PaymentServiceImpl implements PaymentService {
 
 
     @Override
-    public PaymentResponse createPayment(PaymentRequest paymentRequest, String strategyId) throws StripeException {
+    public PaymentResponse createPayment(PaymentRequest paymentRequest) throws StripeException {
 
-        if(paymentRequest == null && !StringUtils.hasText(strategyId)) {
+        if(paymentRequest == null ) {
             throw new IllegalArgumentException("PaymentRequest cannot be null or empty");
         }
 
         // Seleccionar el proveedor basado en el paymentProvider (no más paymentMethodId interno)
-        PaymentStrategy paymentStrategy = paymentStrategyFactory.getStrategy(strategyId);
+        PaymentStrategy paymentStrategy = paymentStrategyFactory.getStrategy(paymentRequest.strategyId());
 
         if(paymentStrategy != null) {
             return paymentStrategy.processPayment(paymentRequest);

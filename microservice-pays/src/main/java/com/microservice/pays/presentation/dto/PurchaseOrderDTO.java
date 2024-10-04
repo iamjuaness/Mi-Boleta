@@ -1,6 +1,7 @@
 package com.microservice.pays.presentation.dto;
 
 import com.microservice.pays.persistence.enums.State;
+import com.microservice.pays.persistence.vo.EventVO;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
@@ -25,7 +26,7 @@ public record PurchaseOrderDTO(
         State stateOrder,
 
         @NotEmpty(message = "La lista de eventos no puede estar vacía.")
-        List<EventDTO> eventDTOList,
+        List<EventVO> cart,
 
         @DecimalMin(value = "0.0", inclusive = false, message = "El monto de la transacción debe ser mayor que cero.")
         @NotNull(message = "El monto de la transacción no puede ser nulo.")

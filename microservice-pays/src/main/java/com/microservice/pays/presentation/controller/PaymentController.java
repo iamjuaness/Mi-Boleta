@@ -20,8 +20,8 @@ public class PaymentController {
     }
     @CrossOrigin(origins = "http://localhost:4200")
     @PostMapping(value = "/pay")
-    public ResponseEntity<MessageDTO<PaymentResponse>>  pay(@RequestBody PaymentRequest paymentRequest, @RequestParam String strategyId) throws StripeException {
-       PaymentResponse paymentResponse = paymentService.createPayment(paymentRequest,strategyId);
+    public ResponseEntity<MessageDTO<PaymentResponse>>  pay(@RequestBody PaymentRequest paymentRequest) throws StripeException {
+       PaymentResponse paymentResponse = paymentService.createPayment(paymentRequest);
    if (StringUtils.hasText(paymentResponse.url())) {
            return ResponseEntity.ok(new MessageDTO<>(false, paymentResponse));
        }

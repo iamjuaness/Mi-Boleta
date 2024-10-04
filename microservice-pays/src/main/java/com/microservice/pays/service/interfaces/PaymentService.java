@@ -7,5 +7,5 @@ import com.stripe.exception.StripeException;
 public interface PaymentService {
 
 
-    public PaymentResponse createPayment(PaymentRequest paymentRequest , String strategyId) throws StripeException;
+    public PaymentResponse createPayment(PaymentRequest paymentRequest ) throws StripeException;
 }
