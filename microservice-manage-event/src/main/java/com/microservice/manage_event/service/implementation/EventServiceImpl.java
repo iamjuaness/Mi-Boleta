@@ -20,6 +20,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -124,9 +125,6 @@ public class EventServiceImpl implements EventService {
             // Set the calculated total capacity and initialize ticketsSold to 0
             event.setCapacity(totalCapacity);
 
-            // Save in the repository
-            eventRepository.save(event);
-
             // Upload images to Cloudinary and get URLs
             Map<String, String> imageLinks = new HashMap<>();
 
@@ -134,6 +132,9 @@ public class EventServiceImpl implements EventService {
                 for (MultipartFile image : createEventDTO.getImages()) {
                     // Rename the file
                     String originalFilename = image.getOriginalFilename();
+
+                    if (originalFilename == null) throw new NullPointerException();
+
                     String newFilename = originalFilename.substring(0, originalFilename.lastIndexOf('.')).replace(".", "_").replace(" ", "_");
 
                     // Upload image
@@ -164,31 +165,26 @@ public class EventServiceImpl implements EventService {
      * @return state action
      */
     @Override
-    public State deleteEvent(String idEvent) {
-        try {
-            if (!StringUtils.hasText(idEvent)){
-                throw new IllegalArgumentException(ID_NOT_VALID);
-            }
-
-            Query query = new Query();
-            query.addCriteria(Criteria.where("_idEvent").is(idEvent));
-
-            Update update = new Update().set("state", State.INACTIVE);
-
-            UpdateResult result = mongoTemplate.updateFirst(query, update, Event.class);
-
-            if (result.getMatchedCount() == 0){
-                throw new ResourceNotFoundException(NOT_FOUND);
-            }
-
-            if (result.getModifiedCount() == 0) {
-                throw new ErrorResponseException("Failed changing code");
-            }
-
-            return State.SUCCESS;
-        } catch (IllegalArgumentException | ResourceNotFoundException | ErrorResponseException e){
-            return State.ERROR;
+    public State deleteEvent(String idEvent) throws ResourceNotFoundException {
+        if (!StringUtils.hasText(idEvent)){
+            throw new IllegalArgumentException(ID_NOT_VALID);
         }
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("_idEvent").is(idEvent));
+
+        Update update = new Update().set("state", State.INACTIVE);
+
+        UpdateResult result = mongoTemplate.updateFirst(query, update, Event.class);
+
+        if (result.getMatchedCount() == 0){
+            throw new ResourceNotFoundException(NOT_FOUND);
+        }
+
+        if (result.getModifiedCount() == 0) {
+            throw new ErrorResponseException("Failed changing code");
+        }
+        return State.SUCCESS;
     }
 
     /**
@@ -199,54 +195,50 @@ public class EventServiceImpl implements EventService {
      */
     @Override
     public State updateEvent(UpdateEventDTO updateEventDTO, String id) {
-        try {
-            // Validates that updateUserDTO is not null
-            if (updateEventDTO == null){
-                throw new IllegalArgumentException("updateEventDTO cannot be null.");
-            }
-
-            if (!StringUtils.hasText(id)){
-                throw new IllegalArgumentException(ID_NOT_VALID);
-            }
-
-            // Gets the event that is in the database
-            Event event = getEvent(id);
-
-            // A boolean variable is defined as needsUpdate and is initializing as false
-            boolean needsUpdate = false;
-
-            // Validates if name of the event changed
-            if (!updateEventDTO.nameEvent().equals(event.getName())) {
-                event.setName(updateEventDTO.nameEvent());
-                needsUpdate = true;
-            }
-
-            // Validates if address of the event changed
-            if (!updateEventDTO.address().equals(event.getAddress())) {
-                event.setAddress(updateEventDTO.address());
-                needsUpdate = true;
-            }
-
-            // Validates if phoneNumber of the event changed
-            if (!updateEventDTO.startDate().equals(event.getStartDate())) {
-                event.setStartDate(updateEventDTO.startDate());
-                needsUpdate = true;
-            }
-
-            // Validate if emailAddress of the event changed
-            if (!updateEventDTO.endDate().equals(event.getEndDate())) {
-                event.setEndDate(updateEventDTO.endDate());
-                needsUpdate = true;
-            }
-
-            // Only saves the information if the parameters changed
-            if (needsUpdate) {
-                eventRepository.save(event);
-            }
-            return State.SUCCESS;
-        } catch (IllegalArgumentException e) {
-            return State.ERROR;
+        // Validates that updateUserDTO is not null
+        if (updateEventDTO == null){
+            throw new NullPointerException("updateEventDTO cannot be null.");
         }
+
+        if (!StringUtils.hasText(id)){
+            throw new IllegalArgumentException(ID_NOT_VALID);
+        }
+
+        // Gets the event that is in the database
+        Event event = getEvent(id);
+
+        // A boolean variable is defined as needsUpdate and is initializing as false
+        boolean needsUpdate = false;
+
+        // Validates if name of the event changed
+        if (!updateEventDTO.nameEvent().equals(event.getName())) {
+            event.setName(updateEventDTO.nameEvent());
+            needsUpdate = true;
+        }
+
+        // Validates if address of the event changed
+        if (!updateEventDTO.address().equals(event.getAddress())) {
+            event.setAddress(updateEventDTO.address());
+            needsUpdate = true;
+        }
+
+        // Validates if phoneNumber of the event changed
+        if (!updateEventDTO.startDate().equals(event.getStartDate())) {
+            event.setStartDate(updateEventDTO.startDate());
+            needsUpdate = true;
+        }
+
+        // Validate if emailAddress of the event changed
+        if (!updateEventDTO.endDate().equals(event.getEndDate())) {
+            event.setEndDate(updateEventDTO.endDate());
+            needsUpdate = true;
+        }
+
+        // Only saves the information if the parameters changed
+        if (needsUpdate) {
+            eventRepository.save(event);
+        }
+        return State.SUCCESS;
     }
 
     /**
@@ -259,33 +251,52 @@ public class EventServiceImpl implements EventService {
      * @return event's list filtered
      */
     @Override
-    public List<Event> filterEvents(String name, LocalDateTime startDate, LocalDateTime endDate, String address, Integer capacity) {
+    public List<Event> filterEvents(String name, LocalDate startDate, LocalDate endDate, String address, Integer capacity) {
         Query query = new Query();
+        List<Criteria> criteriaList = new ArrayList<>();
 
+        // Filtrado por nombre
         if (name != null && !name.isEmpty()) {
             String[] nameParts = name.split(" ");
-            Criteria nameCriteria = new Criteria();
-            for (String part : nameParts){
-                nameCriteria.orOperator(Criteria.where("name").regex(part, "i"));
+            List<Criteria> nameCriteriaList = new ArrayList<>();
+            for (String part : nameParts) {
+                nameCriteriaList.add(Criteria.where("name").regex(part, "i"));
             }
-            query.addCriteria(nameCriteria);
+            if (!nameCriteriaList.isEmpty()) {
+                criteriaList.add(new Criteria().orOperator(nameCriteriaList.toArray(new Criteria[0])));
+            }
         }
+
+        // Filtrado por fecha de inicio
         if (startDate != null) {
-            query.addCriteria(Criteria.where("startDate").gte(startDate));
+            criteriaList.add(Criteria.where("startDate").gte(startDate));
         }
+
+        // Filtrado por fecha de finalización
         if (endDate != null) {
-            query.addCriteria(Criteria.where("endDate").lte(endDate));
+            criteriaList.add(Criteria.where("endDate").lte(endDate));
         }
+
+        // Filtrado por dirección
         if (address != null && !address.isEmpty()) {
             String[] addressParts = address.split(" ");
-            Criteria addressCriteria = new Criteria();
+            List<Criteria> addressCriteriaList = new ArrayList<>();
             for (String part : addressParts) {
-                addressCriteria.orOperator(Criteria.where("address").regex(part, "i")); // Agregar cada parte como condición "OR"
+                addressCriteriaList.add(Criteria.where("address").regex(part, "i"));
             }
-            query.addCriteria(addressCriteria);
+            if (!addressCriteriaList.isEmpty()) {
+                criteriaList.add(new Criteria().orOperator(addressCriteriaList.toArray(new Criteria[0])));
+            }
         }
+
+        // Filtrado por capacidad
         if (capacity != null) {
-            query.addCriteria(Criteria.where("capacity").gte(capacity));
+            criteriaList.add(Criteria.where("capacity").gte(capacity));
+        }
+
+        // Combina todas las condiciones en el query
+        if (!criteriaList.isEmpty()) {
+            query.addCriteria(new Criteria().andOperator(criteriaList.toArray(new Criteria[0])));
         }
 
         return mongoTemplate.find(query, Event.class);
@@ -320,9 +331,9 @@ public class EventServiceImpl implements EventService {
             event.getLocalitiesEvent().add(localityVO);
 
             // Update the total capacity of event
-            int totalCapacity = event.getLocalitiesEvent()
-                    .stream()
-                    .mapToInt(LocalityVO::getCapacityLocality)
+            int totalCapacity = event.getLocalitiesEvent().stream()
+                    .filter(Objects::nonNull)  // Filtra los valores nulos si es necesario
+                    .mapToInt(LocalityVO::getCapacityLocality)  // Suponiendo que tienes un método getCapacity
                     .sum();
             event.setCapacity(totalCapacity);
 

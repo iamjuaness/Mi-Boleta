@@ -4,8 +4,10 @@ import com.microservice.manage_event.persistence.model.entities.Event;
 import com.microservice.manage_event.persistence.model.enums.State;
 import com.microservice.manage_event.persistence.model.vo.LocalityVO;
 import com.microservice.manage_event.persistence.model.vo.LocationVO;
+import com.microservice.manage_event.presentation.advice.ResourceNotFoundException;
 import com.microservice.manage_event.presentation.dto.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,9 +17,9 @@ public interface EventService {
     List<Event> getEvents();
     State createEvent(CreateEventDTO createEventDTO, LocationVO location, List<LocalityVO> localities);
 
-    State deleteEvent(String idEvent);
+    State deleteEvent(String idEvent) throws ResourceNotFoundException;
     State updateEvent(UpdateEventDTO updateEventDTO, String id);
-    List<Event> filterEvents(String name, LocalDateTime startDate, LocalDateTime endDate, String address, Integer capacity);
+    List<Event> filterEvents(String name, LocalDate startDate, LocalDate endDate, String address, Integer capacity);
     List<GlobalEventStatsDTO> getEventStatistics();
     State createLocality(String idEvent, CreateLocalityDTO newLocality);
     State deleteLocality(String idEvent, String idLocality);

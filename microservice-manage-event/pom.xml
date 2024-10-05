@@ -28,6 +28,16 @@
 	<properties>
 		<java.version>17</java.version>
 		<spring-cloud.version>2023.0.3</spring-cloud.version>
+
+
+		<sonar.projectKey>EventApp</sonar.projectKey>
+		<sonar.projectName>EventApp</sonar.projectName>
+		<sonar.host.url>http://localhost:9000</sonar.host.url>
+		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.coverage.exclusions>src/**/entity/*, src/**/MicroserviceManageEventApplication.java, src/**/persistence/*,
+			src/**/client/*, src/**/presentation/*, src/**/interfaces/*, src/**/configuration/*,
+			src/**/exception/*, src/**/configuration/*, src/**/utils/*
+		</sonar.coverage.exclusions>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -73,11 +83,6 @@
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
 			<version>0.12.6</version>
-		</dependency>
-		<dependency>
-			<groupId>jakarta.validation</groupId>
-			<artifactId>jakarta.validation-api</artifactId>
-			<version>3.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
@@ -156,6 +161,69 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>4.0.0.4121</version>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.12</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+						<configuration>
+							<excludes>
+								<exclude>**/entities/**</exclude>
+								<exclude>**/client/**</exclude>
+								<exclude>**/controller/**</exclude>
+								<exclude>**/interfaces/**</exclude>
+								<exclude>**/mapper/**</exclude>
+								<exclude>**/MicroserviceManageEventApplication.class</exclude>
+							</excludes>
+						</configuration>
+					</execution>
+					<execution>
+						<id>jacoco-check</id>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>PACKAGE</element>
+									<limits>
+										<limit>
+											<counter>CLASS</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.5</minimum>
+										</limit>
+									</limits>
+									<excludes>
+										<exclude>**/entities/**</exclude>
+										<exclude>**/client/**</exclude>
+										<exclude>**/controller/**</exclude>
+										<exclude>**/interfaces/**</exclude>
+										<exclude>**/mapper/**</exclude>
+										<exclude>**/MicroserviceManageEventApplication.class</exclude>
+									</excludes>
+								</rule>
+							</rules>
+							<skip>true</skip>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

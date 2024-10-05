@@ -25,18 +25,12 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public Location getLocationById(ObjectId locationId) {
-        if (!StringUtils.hasText(String.valueOf(locationId))){
+        if (locationId == null || !StringUtils.hasText(locationId.toString())) {
             throw new IllegalArgumentException("Id is not valid");
         }
-        try {
-            Location location = locationRepository.findById(locationId).get();
 
-            if (location == null){
-                throw new NullPointerException("Location is not exists");
-            }
-            return location;
-        } catch (IllegalArgumentException | NullPointerException e){
-            return new Location();
-        }
+        // Use Optional to handle the possibility of a missing location
+        return locationRepository.findById(locationId)
+                .orElseThrow(() -> new NullPointerException("Location does not exist"));
     }
 }

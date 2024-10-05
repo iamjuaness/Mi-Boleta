@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -212,7 +213,7 @@ public class ManageEventPublicController {
                             content = @Content(
                                     mediaType = "ISOString",
                                     schema = @Schema(
-                                            implementation = LocalDateTime.class
+                                            implementation = LocalDate.class
                                     )
                             )
                     ),
@@ -222,7 +223,7 @@ public class ManageEventPublicController {
                             content = @Content(
                                     mediaType = "ISOString",
                                     schema = @Schema(
-                                            implementation = LocalDateTime.class
+                                            implementation = LocalDate.class
                                     )
                             )
                     ),
@@ -292,8 +293,8 @@ public class ManageEventPublicController {
     )
     public ResponseEntity<MessageDTO<List<Event>>> filterEvents(
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) LocalDateTime startDate,
-            @RequestParam(required = false) LocalDateTime endDate,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate,
             @RequestParam(required = false) String address,
             @RequestParam(required = false) Integer capacity) {
         try {

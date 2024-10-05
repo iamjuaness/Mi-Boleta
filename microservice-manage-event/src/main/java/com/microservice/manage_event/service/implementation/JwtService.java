@@ -13,6 +13,10 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
 
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
+    }
+
     public Boolean validateToken(String token) {
         try {
             // The parser verifies the signature and token format.
