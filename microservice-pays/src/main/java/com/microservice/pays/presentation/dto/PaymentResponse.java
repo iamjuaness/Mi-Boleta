@@ -12,6 +12,7 @@ public record PaymentResponse(
 //        String dateCreated,        // Fecha y hora de creación del pago
 //        String dateApproved,       // Fecha y hora de aprobación del pago (si corresponde)
 //        String errorMessage,        // Mensaje de error, si hay algún problema
-        String url
+        String url,
+        boolean error
 ) {
 }

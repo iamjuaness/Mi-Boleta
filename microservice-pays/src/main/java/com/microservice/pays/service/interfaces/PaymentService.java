@@ -8,4 +8,5 @@ public interface PaymentService {
 
 
     public PaymentResponse createPayment(PaymentRequest paymentRequest ) throws StripeException;
+    public void setSateOrder (String idSession, String strategyId);
 }
