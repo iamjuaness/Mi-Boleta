@@ -1,5 +1,6 @@
 package com.microservice.pays.service.implementation;
 
+import com.microservice.pays.persistence.enums.State;
 import com.microservice.pays.presentation.dto.PaymentRequest;
 import com.microservice.pays.presentation.dto.PaymentResponse;
 import com.microservice.pays.service.interfaces.PaymentService;
@@ -37,6 +38,28 @@ public class PaymentServiceImpl implements PaymentService {
         }else {
             throw new NullPointerException("PaymentStrategy is null");
         }
+    }
+
+    @Override
+    public void setSateOrder(String idSession, String strategyId) {
+
+        //verificar que no sea vacio
+        if(!StringUtils.hasText(idSession) || !StringUtils.hasText(strategyId)) {
+            throw new IllegalArgumentException("IdSession and strategyId cannot be null");
+        }
+        //traer la estrategia
+        PaymentStrategy paymentStrategy = paymentStrategyFactory.getStrategy(strategyId);
+        if(paymentStrategy != null) {
+            throw new NullPointerException("PaymentStrategy is null");
+        }
+
+        String statePayment = paymentStrategy.checkPaymentStatus(idSession);
+        if (statePayment.equals(State.SUCCESS.toString())){
+//            actualizar  por medio de un endpoint en el microservicio shopping
+        }
+//
+
+
     }
 
 

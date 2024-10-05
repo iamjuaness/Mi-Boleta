@@ -1,7 +1,7 @@
 package com.microservice.pays.service.implementation;
 
+import com.microservice.pays.persistence.enums.State;
 import com.microservice.pays.persistence.vo.EventVO;
-import com.microservice.pays.presentation.dto.EventDTO;
 import com.microservice.pays.presentation.dto.PaymentRequest;
 import com.microservice.pays.presentation.dto.PaymentResponse;
 import com.microservice.pays.service.interfaces.PaymentStrategy;
@@ -19,41 +19,53 @@ public class StripeStrategy implements PaymentStrategy {
 
     @Override
     public PaymentResponse processPayment(PaymentRequest request) throws StripeException {
-//        Extraer el total de la orden de compra
-        System.out.println(request);
-        if (request == null) System.out.println("request is null");
-        if (request.purchaseOrderDTO() == null) System.out.println("purchase is null");
 
-        BigDecimal unitValue = request.purchaseOrderDTO().cart().get(0).getUnitValue();
+
+        try {
+            //verificar si la respuesta es null
+            if (request == null) {
+                throw new NullPointerException("request is null");
+            }
+
+//        Extraer el precio unitario de compra en Bigdecimal
+            BigDecimal unitValue = request.purchaseOrderDTO().cart().get(0).getUnitValue();
 
 //        convertir el valor totalAmount a long para poder operarlo
+            long unitValueLong = unitValue.multiply(BigDecimal.valueOf(100)).longValue();
 
-        long unitValueLong = unitValue.multiply(BigDecimal.valueOf(100)).longValue();
+            //crear los parámetros de la sessión
+            SessionCreateParams.Builder params = SessionCreateParams.builder().addPaymentMethodType(
+                            SessionCreateParams.PaymentMethodType.CARD)
+                    .setMode(SessionCreateParams.Mode.PAYMENT)
+                    .setSuccessUrl("http://localhost:4200/payment/success")
+                    .setCancelUrl("http://localhost:4200/payment/fail");
 
-        SessionCreateParams.Builder params = SessionCreateParams.builder().addPaymentMethodType(
-                        SessionCreateParams.PaymentMethodType.CARD)
-                .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl("http://localhost:4200/payment/success")
-                .setCancelUrl("http://localhost:4200/payment/fail");
+            // Agregar cada producto al SessionCreateParams
+            for (EventVO event : request.purchaseOrderDTO().cart()) {
+                params.addLineItem(SessionCreateParams.LineItem.builder()
+                        .setQuantity((long) event.getQuantity())
+                        .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
+                                .setCurrency("usd")
+                                .setUnitAmount(unitValueLong)
+                                .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                        .setName(event.getNameLocality())
+                                        .build())
+                                .build())
+                        .build());
+            }
 
-        // Agregar cada producto al SessionCreateParams
-        for (EventVO event : request.purchaseOrderDTO().cart()) {
-            params.addLineItem(SessionCreateParams.LineItem.builder()
-                    .setQuantity((long) event.getQuantity())
-                    .setPriceData(SessionCreateParams.LineItem.PriceData.builder()
-                            .setCurrency("usd")
-                            .setUnitAmount(unitValueLong)
-                            .setProductData(SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                    .setName(event.getNameLocality())
-                                    .build())
-                            .build())
-                    .build());
+            //crear la sessión con los parámetros
+            Session session = Session.create(params.build());
+
+            //verificar que se haya creado la session
+            if (session == null) {
+                throw new NullPointerException("session is null");
+            }
+
+            return new PaymentResponse(session.getUrl(), false);
+        } catch (NullPointerException e) {
+            return new PaymentResponse(e.getMessage(), true);
         }
-
-        Session session = Session.create(params.build());
-        System.out.println("Session created: " + session);
-
-        return new PaymentResponse(session.getUrl());
     }
 
     @Override
@@ -68,7 +80,20 @@ public class StripeStrategy implements PaymentStrategy {
 
     @Override
     public String checkPaymentStatus(String paymentId) {
-        return "";
+        try {
+            // Recupera la sesión de pago
+            Session session = Session.retrieve(paymentId);
+
+            // Verifica si el pago fue exitoso
+            if ("paid".equals(session.getPaymentStatus())) {
+                System.out.println(session.getPaymentStatus());
+                return State.SUCCESS.toString();
+            } else {
+                return State.PENDING.toString();
+            }
+        } catch (Exception e) {
+            return State.ERROR.toString();
+        }
     }
 
     @Override

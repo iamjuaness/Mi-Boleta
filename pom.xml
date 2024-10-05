@@ -25,6 +25,7 @@
 		<module>microservice-manage-event</module>
 		<module>microservice-pays</module>
 		<module>microservice-cart</module>
+		<module>microservice-shopping</module>
 	</modules>
 
 
