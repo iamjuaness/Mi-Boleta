@@ -22,7 +22,7 @@ public interface UserService {
 
     List<User> getAllUsers();
 
-    void addToCart(AddToCartDTO addToCartDTO, String id) throws ErrorResponseException, ResourceNotFoundException;
+    State addToCart(AddToCartDTO addToCartDTO, String id) throws ErrorResponseException, ResourceNotFoundException;
 
     void deleteTicketsCart(String userId, String itemId) throws NotFoundException, ErrorResponseException, ResourceNotFoundException;
     void clearCart(String userId) throws ErrorResponseException, ResourceNotFoundException;

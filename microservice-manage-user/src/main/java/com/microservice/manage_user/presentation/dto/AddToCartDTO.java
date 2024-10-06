@@ -1,4 +1,12 @@
 package com.microservice.manage_user.presentation.dto;
 
-public record AddToCartDTO() {
+import java.math.BigDecimal;
+
+public record AddToCartDTO(
+        String idEventVO,
+        String idEvent,
+        String idLocality,
+        BigDecimal unitValue,
+        Integer quantity
+) {
 }

@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -131,6 +132,17 @@ public class ManageUserController {
         } catch (CustomClientException e) {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
         } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        }
+    }
+
+    @PutMapping(value = "/add-cart", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<MessageDTO<State>> addToCart(@RequestBody AddToCartDTO addToCartDTO, String idUser){
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, userService.addToCart(addToCartDTO, idUser)));
+        } catch (CustomClientException | ResourceNotFoundException e){
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        } catch (RuntimeException e){
             return ResponseEntity.badRequest().body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
         }
     }

@@ -234,12 +234,14 @@ public class UserServiceImpl implements UserService{
      * -This method allows a user to add tickets to a shopping cart.
      *
      * @param addToCartDTO information for to add to cart
-     * @param id user's id
-     * @throws ErrorResponseException if is cannot to add to cart
+     * @param id           user's id
+     * @return state action
+     * @throws ErrorResponseException   if is cannot to add to cart
      * @throws IllegalArgumentException if addToCartDTO or id are null
      */
     @Override
-    public void addToCart(AddToCartDTO addToCartDTO, String id) throws ErrorResponseException, ResourceNotFoundException {//
+    public State addToCart(AddToCartDTO addToCartDTO, String id) throws ErrorResponseException, ResourceNotFoundException {//
+
         if (addToCartDTO == null || id == null){
             throw new IllegalArgumentException("parameter is null");
         }
@@ -258,6 +260,8 @@ public class UserServiceImpl implements UserService{
         if (result.getModifiedCount() == 0){
             throw new ErrorResponseException("Failed to add to cart");
         }
+
+        return State.SUCCESS;
     }
 
 
