@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: msvc-shopping
+  data:
+    mongodb:
+      uri: mongodb+srv://mi-boleta:mi-boleta@mi-boleta.fixwk.mongodb.net/?retryWrites=true&w=majority&appName=mi-boleta
+      database: mi-boleta
+      password: mi-boleta
+      username: mi-boleta
 
   eureka:
     instance:
