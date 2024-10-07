@@ -3,7 +3,9 @@ package com.microservice_shopping.utils.mapper;
 import com.microservice_shopping.persistence.model.entities.PurchaseOrder;
 import com.microservice_shopping.persistence.model.enums.State;
 import com.microservice_shopping.presentation.dto.PurchaseOrderDTO;
+import org.springframework.stereotype.Service;
 
+@Service
 public class MapperOrder {
 
     public PurchaseOrder dtoOrderToEntity (PurchaseOrderDTO order) {
