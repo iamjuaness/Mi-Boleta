@@ -21,7 +21,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
 
@@ -256,15 +255,19 @@ public class EventServiceImpl implements EventService {
         List<Criteria> criteriaList = new ArrayList<>();
 
         // Filtrado por nombre
-        if (name != null && !name.isEmpty()) {
-            String[] nameParts = name.split(" ");
-            List<Criteria> nameCriteriaList = new ArrayList<>();
-            for (String part : nameParts) {
-                nameCriteriaList.add(Criteria.where("name").regex(part, "i"));
-            }
-            if (!nameCriteriaList.isEmpty()) {
-                criteriaList.add(new Criteria().orOperator(nameCriteriaList.toArray(new Criteria[0])));
-            }
+        if (name == null) throw new NullPointerException(PARAMETER_NOT_VALID);
+
+        if (name.isEmpty()) throw new IllegalArgumentException(PARAMETER_NOT_VALID);
+
+        String[] nameParts = name.split(" ");
+        List<Criteria> nameCriteriaList = new ArrayList<>();
+
+        for (String part : nameParts) {
+            nameCriteriaList.add(Criteria.where("name").regex(part, "i"));
+        }
+
+        if (!nameCriteriaList.isEmpty()) {
+            criteriaList.add(new Criteria().orOperator(nameCriteriaList.toArray(new Criteria[0])));
         }
 
         // Filtrado por fecha de inicio
