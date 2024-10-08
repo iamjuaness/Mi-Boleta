@@ -16,6 +16,9 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
@@ -90,6 +93,22 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         }catch (MongoException e) {
             return State.ERROR;
         }
+
+    }
+
+    @Override
+    public List<PurchaseOrderDTO> getAllPurchaseOrdersByUserId(String userId) {
+
+          if (userId == null) {
+              throw new IllegalArgumentException("User id cannot be null");
+          }
+          List<PurchaseOrderDTO> purchaseOrderDTOS = purchaseOrderRepository.findByUserId(userId);
+
+          if (purchaseOrderDTOS == null || purchaseOrderDTOS.isEmpty()) {
+              throw new IllegalArgumentException("No purchaseOrder found");
+          }
+
+          return purchaseOrderDTOS;
 
     }
 }
