@@ -8,9 +8,23 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @FeignClient(name = "msvc-manage-user", url = "localhost:8082/api/manage-user")
 public interface ManageUserClient {
 
     @PutMapping(value = "/add-cart", consumes = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<MessageDTO<State>> addToCart(@RequestBody AddToCartDTO addToCartDTO, @RequestParam String idUser);
+
+    @DeleteMapping("/delete-item-cart")
+    ResponseEntity<MessageDTO<State>> deleteItemCart(@RequestParam String idUser, @RequestParam String idEventVO);
+
+    @PutMapping("/upgrade-quantity")
+    ResponseEntity<MessageDTO<State>> upgradeQuantity(String idUser, String idEventVO, int quantity);
+
+    @GetMapping("/get-cart")
+    ResponseEntity<MessageDTO<List<AddToCartDTO>>> getCart(String idUser);
+
+    @DeleteMapping("/clear-cart")
+    ResponseEntity<MessageDTO<State>> clearCart(String idUser);
 }
