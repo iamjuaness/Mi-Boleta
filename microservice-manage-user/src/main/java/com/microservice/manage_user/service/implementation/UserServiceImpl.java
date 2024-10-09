@@ -38,6 +38,10 @@ public class UserServiceImpl implements UserService{
     private static final String PARAMETER_NULL = "parameter are not valid";
     private static final String FAILED_DELETE_ACCOUNT = "Failed to deactivate account";
 
+    //-----------------
+
+    private static final String CART_USER = "cartUser";
+
     public UserServiceImpl(UserRepository userRepository, AppUtil appUtil, UserMapper userMapper, PasswordEncoder passwordEncoder, MongoTemplate mongoTemplate) {
         this.userRepository = userRepository;
         this.appUtil = appUtil;
@@ -249,7 +253,7 @@ public class UserServiceImpl implements UserService{
         Query query = new Query();
         query.addCriteria(Criteria.where("_id").is(id));
 
-        Update update = new Update().addToSet("cartUser", addToCartDTO);
+        Update update = new Update().addToSet(CART_USER, addToCartDTO);
 
         UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
 
@@ -267,23 +271,26 @@ public class UserServiceImpl implements UserService{
 
     /**
      * -This method allows a user to remove tickets from a shopping cart.
+     *
      * @param userId is the user's id
      * @param itemId is the item's id
-     * @throws ErrorResponseException if not is cannot to remove from shopping cart
+     * @return
+     * @throws ErrorResponseException    if not is cannot to remove from shopping cart
      * @throws ResourceNotFoundException if a shopping cart is not found
      */
     @Override
-    public void deleteTicketsCart(String userId, String itemId) throws ResourceNotFoundException, ErrorResponseException {
+    public State deleteTicketsCart(String userId, String itemId) throws ResourceNotFoundException, ErrorResponseException {
         if (!StringUtils.hasText(userId) || !StringUtils.hasText(itemId)) {
             throw new IllegalArgumentException("User ID and Item ID cannot be null or empty.");
         }
+
 
         // Create a query to find the user by userId
         Query query = new Query();
         query.addCriteria(Criteria.where("_id").is(userId));
 
         // Create an update to pull the item from the user's cart
-        Update update = new Update().pull("cartUser", new Query(Criteria.where("_id").is(itemId)));
+        Update update = new Update().pull(CART_USER, new Query(Criteria.where("idEventVO").is(itemId)));
 
         // Perform the update operation
         UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
@@ -297,15 +304,19 @@ public class UserServiceImpl implements UserService{
         if (result.getModifiedCount() == 0) {
             throw new ErrorResponseException("Failed to remove item from cart");
         }
+
+        return State.SUCCESS;
     }
 
 
     /**
      * -This method allows a user to clear the shopping cart.
+     *
+     * @return state action
      * @throws ErrorResponseException if is cannot clear the shopping cart
      */
     @Override
-    public void clearCart(String userId) throws ErrorResponseException, ResourceNotFoundException {
+    public State clearCart(String userId) throws ErrorResponseException, ResourceNotFoundException {
         if (!StringUtils.hasText(userId)) {
             throw new IllegalArgumentException(ID_NULL);
         }
@@ -315,7 +326,7 @@ public class UserServiceImpl implements UserService{
         query.addCriteria(Criteria.where("_id").is(userId));
 
         // Create an update to clear the cart
-        Update update = new Update().set("userCart", new ArrayList<>());
+        Update update = new Update().set(CART_USER, new ArrayList<>());
 
         // Perform the update operation
         UpdateResult result = mongoTemplate.updateFirst(query, update, User.class);
@@ -329,6 +340,8 @@ public class UserServiceImpl implements UserService{
         if (result.getModifiedCount() == 0) {
             throw new ErrorResponseException("Failed to clear the cart");
         }
+
+        return State.SUCCESS;
     }
 
 

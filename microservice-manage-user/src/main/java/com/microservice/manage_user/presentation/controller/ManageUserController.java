@@ -146,4 +146,27 @@ public class ManageUserController {
             return ResponseEntity.badRequest().body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
         }
     }
+
+    @DeleteMapping("/delete-item-cart")
+    public ResponseEntity<MessageDTO<State>> deleteItemCart(@RequestParam String idUser, @RequestParam String idEventVO){
+        try {
+            System.out.println("Llego al cliente" + idUser + idEventVO);
+            return ResponseEntity.ok().body(new MessageDTO<>(false, userService.deleteTicketsCart(idUser, idEventVO)));
+        } catch (CustomClientException | ResourceNotFoundException e){
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        } catch (RuntimeException e){
+            return ResponseEntity.badRequest().body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/clear-cart")
+    public ResponseEntity<MessageDTO<State>> clearCart(String idUser){
+        try {
+            return ResponseEntity.ok().body(new MessageDTO<>(false, userService.clearCart(idUser)));
+        } catch (CustomClientException | ResourceNotFoundException e){
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        } catch (RuntimeException e){
+            return ResponseEntity.badRequest().body(new MessageDTO<>(true, State.ERROR, e.getMessage()));
+        }
+    }
 }

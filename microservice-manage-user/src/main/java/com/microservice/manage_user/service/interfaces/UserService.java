@@ -24,8 +24,8 @@ public interface UserService {
 
     State addToCart(AddToCartDTO addToCartDTO, String id) throws ErrorResponseException, ResourceNotFoundException;
 
-    void deleteTicketsCart(String userId, String itemId) throws NotFoundException, ErrorResponseException, ResourceNotFoundException;
-    void clearCart(String userId) throws ErrorResponseException, ResourceNotFoundException;
+    State deleteTicketsCart(String userId, String itemId) throws NotFoundException, ErrorResponseException, ResourceNotFoundException;
+    State clearCart(String userId) throws ErrorResponseException, ResourceNotFoundException;
     State activateAccount(String id) throws ErrorResponseException, ResourceNotFoundException;
     State deleteAccount(String id) throws ResourceNotFoundException;
 
