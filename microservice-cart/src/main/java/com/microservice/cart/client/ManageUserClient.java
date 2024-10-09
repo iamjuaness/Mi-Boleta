@@ -20,11 +20,11 @@ public interface ManageUserClient {
     ResponseEntity<MessageDTO<State>> deleteItemCart(@RequestParam String idUser, @RequestParam String idEventVO);
 
     @PutMapping("/upgrade-quantity")
-    ResponseEntity<MessageDTO<State>> upgradeQuantity(String idUser, String idEventVO, int quantity);
+    ResponseEntity<MessageDTO<State>> upgradeQuantity(@RequestParam String idUser, @RequestParam String idEventVO, @RequestParam int quantity);
 
     @GetMapping("/get-cart")
-    ResponseEntity<MessageDTO<List<AddToCartDTO>>> getCart(String idUser);
+    ResponseEntity<MessageDTO<List<AddToCartDTO>>> getCart(@RequestParam String idUser);
 
     @DeleteMapping("/clear-cart")
-    ResponseEntity<MessageDTO<State>> clearCart(String idUser);
+    ResponseEntity<MessageDTO<State>> clearCart(@RequestParam String idUser);
 }
