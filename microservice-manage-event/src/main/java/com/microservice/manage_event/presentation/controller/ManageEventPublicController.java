@@ -116,19 +116,6 @@ public class ManageEventPublicController {
             summary = "Get all events",
             description = "Get all database's events",
             tags = {"Event"},
-            parameters = {
-                    @Parameter(
-                            name = "idEvent",
-                            description = "Event's id",
-                            required = true,
-                            content = @Content(
-                                    mediaType = "String",
-                                    schema = @Schema(
-                                            implementation = String.class
-                                    )
-                            )
-                    )
-            },
             responses = {
                     @ApiResponse(
                             responseCode = "200",
