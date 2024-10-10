@@ -1,6 +1,6 @@
 package com.microservice.cart.utils;
 
-import com.microservice.cart.service.configuration.JwtRequestFilter;
+import com.microservice.cart.service.configuration.security.JwtRequestFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

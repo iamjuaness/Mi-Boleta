@@ -118,6 +118,12 @@ public class CartController {
         }
     }
 
+    /**
+     * This endpoint is used to run deleteToCart service
+     * @param idUser user's id
+     * @param idEventVO item's id
+     * @return state action
+     */
     @DeleteMapping("/delete-to-cart")
     @Operation(
             summary = "Delete an item of the cart",
@@ -200,6 +206,13 @@ public class CartController {
         }
     }
 
+    /**
+     * This endpoint is used to run upgradeQuantity service
+     * @param idUser user's id
+     * @param idEventVO item's id
+     * @param quantity new quantity
+     * @return state action
+     */
     @PutMapping("/upgrade-quantity")
     @Operation(
             summary = "Upgrade quantity of an item of the cart",
@@ -293,6 +306,11 @@ public class CartController {
         }
     }
 
+    /**
+     * This endpoint is used to run clearCart service
+     * @param idUser user's id
+     * @return state action
+     */
     @DeleteMapping("/clear-cart")
     @Operation(
             summary = "Clear the cart",
@@ -364,6 +382,11 @@ public class CartController {
         }
     }
 
+    /**
+     * This endpoint is used to run getCart service
+     * @param idUser user's id
+     * @return state action
+     */
     @GetMapping("/get-cart")
     @Operation(
             summary = "Get the cart",

@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:4200/")
 @RequestMapping("/api/manage-event")
 @Tag(name = "Manage Event", description = "Private controller requiring authentication to access your endpoints")
 public class ManageEventController {
