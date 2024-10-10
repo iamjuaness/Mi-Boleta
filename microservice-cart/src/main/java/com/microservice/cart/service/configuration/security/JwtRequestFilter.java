@@ -1,4 +1,4 @@
-package com.microservice.cart.service.configuration;
+package com.microservice.cart.service.configuration.security;
 
 import com.microservice.cart.service.implementation.JwtService;
 import io.jsonwebtoken.*;
@@ -21,11 +21,11 @@ public class JwtRequestFilter extends OncePerRequestFilter {
     private static final Map<String, String> ROLE_MAP = new HashMap<>();
 
     static {
-        ROLE_MAP.put("/api/manage-user/**", "CLIENT");
+        ROLE_MAP.put("/api/cart/**", "CLIENT");
     }
 
     private static final String[] PUBLIC_ROUTES = {
-            "/api/request-user/**"
+
     };
 
     public JwtRequestFilter(JwtService jwtService) {
