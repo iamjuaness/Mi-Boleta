@@ -64,7 +64,7 @@ public class PaymentController {
     }
 
     @PatchMapping("/setPaymentStatus")
-    public ResponseEntity<MessageDTO<String>> getPaymentStatus(@RequestParam("idSession") String idSession, @RequestParam("strategyId") String strategyId) throws StripeException {
+    public ResponseEntity<MessageDTO<String>> getPaymentStatus(@RequestParam("idSession") String idSession, @RequestParam("strategyId") String strategyId)   {
         paymentService.setSateOrder(idSession, strategyId);
         return ResponseEntity.ok(new MessageDTO<>(true, "OK"));
     }
