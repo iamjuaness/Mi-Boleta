@@ -1,7 +1,7 @@
 ﻿<h1 align="left">Mi Boleta</h1>
  <p align="left">
    <img src="https://img.shields.io/badge/STATUS-EN%20DESAROLLO-green">
-   <img src="https://img.shields.io/github/stars/iamjuaness?style=social">
+   <img src="https://img.shields.io/github/stars/iamjuaness/Mi-Boleta?color=orange"
  </p>
 
  <h1 align="left">
@@ -51,4 +51,10 @@ Se emplea una arquitectura de microservicios que se distribuye de la siguiente m
 
 | [<img src="https://avatars.githubusercontent.com/u/104481229?v=4" width=115><br><sub>Juan E. Cardona</sub>](https://github.com/iamjuaness) | [<img src="https://avatars.githubusercontent.com/u/114635275?v=4" width=115><br><sub>Juan E. Ramirez</sub>](https://github.com/esteban2505j)
 | :---: | :---: |
+
+## Contributors
+
+<a href="https://github.com/iamjuaness/Mi-Boleta/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=iamjuaness/Mi-Boleta" />
+</a>
 
