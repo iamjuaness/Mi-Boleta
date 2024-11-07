@@ -67,6 +67,7 @@ public class AuthServiceImpl implements AuthService {
 
             //generar el token
             String token = jwtUtilsService.generarToken(user.getData().emailAddress(), authToken);
+
             if (token == null) {
                 throw new IllegalArgumentException("No se ha generado el token correctamente");
             }

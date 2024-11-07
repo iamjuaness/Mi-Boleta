@@ -99,7 +99,6 @@ public class UserServiceImpl implements UserService{
      */
     @Override
     public ClientDTO login(LoginClientDTO loginClientDTO) throws ErrorResponseException {
-
         // Validate that loginDTO is not null
         if (loginClientDTO == null || !StringUtils.hasText(loginClientDTO.emailAddress()) || !StringUtils.hasText(loginClientDTO.password())) {
             throw new IllegalArgumentException("The login DTO and its fields cannot be null or empty.");

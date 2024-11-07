@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "http://localhost:4200")
 @Tag(name = "Microservice Auth", description = "this microservice is in charge of handling security-related requests")
 public class AuthController {
 
