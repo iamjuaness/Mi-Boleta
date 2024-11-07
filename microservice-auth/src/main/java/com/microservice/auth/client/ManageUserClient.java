@@ -20,7 +20,7 @@ public interface ManageUserClient {
    ResponseEntity<MessageDTO<StateDTO>> registerClient(@Valid @RequestBody RegisterClientDTO registerClientDTO);
 
    @PutMapping("/save-code-validation")
-    ResponseEntity<MessageDTO<State>> saveCodeValidation(@RequestParam("code") String code , @RequestParam("id") String idUser);
+    ResponseEntity<MessageDTO<State>> saveCodeValidation(@RequestParam("code") String code , @RequestParam("idUser") String idUser);
 
     @PutMapping("/validate-code")
     ResponseEntity<MessageDTO<State>> validateCode(@RequestParam("code") String code , @RequestParam("idUser") String idUser);
