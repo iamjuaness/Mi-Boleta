@@ -26,4 +26,6 @@ public interface EventService {
     State updateLocality(String idEvent, String idLocality, UpdateLocalityDTO updateLocalityDTO);
 
     List<ListEventStatsDTO> getStatisticsByEvent();
+
+    List<EventRecommendationDTO> recommendEvents(String userId);
 }

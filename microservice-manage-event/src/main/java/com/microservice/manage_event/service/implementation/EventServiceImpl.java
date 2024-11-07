@@ -1,5 +1,6 @@
 package com.microservice.manage_event.service.implementation;
 
+import com.microservice.manage_event.client.ManageUserClient;
 import com.microservice.manage_event.persistence.model.entities.Event;
 import com.microservice.manage_event.persistence.model.enums.State;
 import com.microservice.manage_event.persistence.model.vo.LocalityVO;
@@ -7,20 +8,25 @@ import com.microservice.manage_event.persistence.model.vo.LocationVO;
 import com.microservice.manage_event.persistence.repository.EventRepository;
 import com.microservice.manage_event.presentation.advice.ResourceNotFoundException;
 import com.microservice.manage_event.presentation.dto.*;
+import com.microservice.manage_event.presentation.dto.http.MessageDTO;
 import com.microservice.manage_event.service.exception.ErrorResponseException;
 import com.microservice.manage_event.service.interfaces.EventService;
 import com.microservice.manage_event.utils.mapper.EventMapper;
+import com.microservice.manage_user.persistence.model.entities.User;
+import com.microservice.manage_user.persistence.model.vo.EventVO;
 import com.mongodb.client.result.UpdateResult;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 
@@ -31,16 +37,18 @@ public class EventServiceImpl implements EventService {
     final EventMapper eventMapper;
     final MongoTemplate mongoTemplate;
     final ImagesServiceImpl imagesService;
+    final ManageUserClient manageUserClient;
 
     private static final String NOT_FOUND = "Event not found";
     private static final String ID_NOT_VALID = "Id is not valid";
     private static final String PARAMETER_NOT_VALID = "Parameter are not valid";
 
-    public EventServiceImpl(EventRepository eventRepository, EventMapper eventMapper, MongoTemplate mongoTemplate, ImagesServiceImpl imagesService) {
+    public EventServiceImpl(EventRepository eventRepository, EventMapper eventMapper, MongoTemplate mongoTemplate, ImagesServiceImpl imagesService, ManageUserClient manageUserClient) {
         this.eventRepository = eventRepository;
         this.eventMapper = eventMapper;
         this.mongoTemplate = mongoTemplate;
         this.imagesService = imagesService;
+        this.manageUserClient = manageUserClient;
     }
 
     /**
@@ -430,5 +438,69 @@ public class EventServiceImpl implements EventService {
     @Override
     public List<ListEventStatsDTO> getStatisticsByEvent() {
         return eventRepository.getEventStatsByEvent();
+    }
+
+    @Override
+    public List<EventRecommendationDTO> recommendEvents(String userId) {
+        // Obtener usuario actual
+        ResponseEntity<MessageDTO<User>> userResponse = manageUserClient.getUser(userId);
+        User currentUser = Optional.ofNullable(userResponse.getBody())
+                .map(MessageDTO::getData)
+                .orElseThrow(() -> new NullPointerException("Usuario no encontrado"));
+
+        // Obtener todos los eventos activos
+        List<Event> activeEvents = eventRepository.findByDateAfterAndStatusActive(LocalDateTime.now());
+
+        // Calcular puntuación para cada evento
+        List<EventRecommendationDTO> recommendations = new ArrayList<>();
+
+        for (Event event : activeEvents) {
+            double score = calculateRecommendationScore(event, currentUser);
+
+            if (score > 0) {
+                recommendations.add(new EventRecommendationDTO(
+                        event.getIdEvent(),
+                        event.getName(),
+                        score
+                ));
+            }
+        }
+
+        // Ordenar por puntuación descendente
+        recommendations.sort((a, b) -> Double.compare(b.getScore(), a.getScore()));
+
+        return recommendations.subList(0, Math.min(10, recommendations.size()));
+    }
+
+    private double calculateRecommendationScore(Event event, User user) {
+        double score = 0.0;
+
+        // Factor de ubicación (30% del peso)
+        if (user.getAddress().equals(event.getLocations().getCity())) {
+            score += 30;
+        }
+
+        List<String> eventNames = user.getEventsUser()
+                .stream()
+                .map(EventVO::getName)
+                .toList();
+
+        // Factor de categorías preferidas (40% del peso)
+        Set<String> userPreferredCategories = new HashSet<>(eventNames);
+        if (userPreferredCategories.contains(event.getName())) {
+            score += 40;
+        }
+
+        // Factor de historial de eventos (30% del peso)
+        List<EventVO> userEventHistory = user.getEventsUser();
+        if (userEventHistory != null && !userEventHistory.isEmpty()) {
+            // Si el usuario ha asistido a eventos similares
+            long similarEventsAttended = userEventHistory.stream()
+                    .filter(e -> e.getName().equals(event.getName()))
+                    .count();
+            score += Math.min(similarEventsAttended * 5, 30); // Máximo 30 puntos
+        }
+
+        return score;
     }
 }

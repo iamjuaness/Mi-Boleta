@@ -5,6 +5,8 @@ import com.microservice.manage_event.presentation.dto.GlobalEventStatsDTO;
 import com.microservice.manage_event.presentation.dto.ListEventStatsDTO;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface EventRepository extends MongoRepository<Event, String> {
@@ -34,4 +36,6 @@ public interface EventRepository extends MongoRepository<Event, String> {
                     "} }"
     })
     List<ListEventStatsDTO> getEventStatsByEvent();
+
+    List<Event> findByDateAfterAndStatusActive(LocalDateTime now);
 }
