@@ -19,7 +19,7 @@ public class MailConfig {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setHost("smtp.gmail.com");
         mailSender.setPort(587);
-        mailSender.setUsername("unilocalsoporte@gmail.com");
+        mailSender.setUsername("juane.ramirezt@uqvirtual.edu.co");
         mailSender.setPassword(password);
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.transport.protocol", "smtp");

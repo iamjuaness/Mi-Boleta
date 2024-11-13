@@ -141,8 +141,8 @@ public class AuthController {
                     )
             }
     )
-    public  ResponseEntity<MessageAuthDTO<State>> activeAccount (@RequestParam("code") String code , @RequestParam("idUser") String idUser)  {
-        State stateActiveAccount = authServiceImpl.activationAccount(code,idUser);
+    public  ResponseEntity<MessageAuthDTO<State>> activeAccount (@RequestParam("code") String code , @RequestParam("emailAddress") String emailAddress)  {
+        State stateActiveAccount = authServiceImpl.activationAccount(code, emailAddress);
         return ResponseEntity.ok().body(new MessageAuthDTO<>(false, stateActiveAccount));
     }
 

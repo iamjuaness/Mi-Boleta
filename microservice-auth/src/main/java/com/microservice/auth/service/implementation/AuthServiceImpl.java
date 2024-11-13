@@ -57,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
             }
 
             //Verificar que no el usuario esté activo
-            if (user.getData().state() != State.ACTIVE) throw  new IllegalArgumentException("Por favor active su cuenta");
+            if (user.getData().state() != State.ACTIVE) return new TokenDTO(State.INACTIVE.toString());
 
             // Crear los atributos del token de autenticación
             Map<String, Object> authToken = new HashMap<>();
@@ -162,19 +162,28 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public State activationAccount(String code, String idUser)  {
+    public State activationAccount(String code, String emailAddress)  {
 
         try {
-            if(!StringUtils.hasText(code)) throw new IllegalArgumentException("error  ingrese un código de verifiación");
+            System.out.println("email es="+emailAddress);
+            System.out.println(code);
+            System.out.println("si llega por lo menos aquí");
+            if(!StringUtils.hasText(code) && !StringUtils.hasText(emailAddress)) throw new IllegalArgumentException("error  ingrese un código de verifiación");
+            ResponseEntity<MessageDTO<ClientDTO>> user = manageUserClient.getUserByEmail(emailAddress);
 
+            MessageDTO<ClientDTO> messageDTO = user.getBody();
+            System.out.println(messageDTO.getData());
+            if (messageDTO == null) {
+                throw new IllegalArgumentException("error  ingrese un usuario");
+            }
             // verifica el código
-            ResponseEntity<MessageDTO<State>> stateVerifiactionCode = manageUserClient.validateCode(code,idUser);
+            ResponseEntity<MessageDTO<State>> stateVerifiactionCode = manageUserClient.validateCode(code,messageDTO.getData().idUser());
             MessageDTO<State> stateUser = stateVerifiactionCode.getBody();
             if (stateUser == null || stateUser.getData() == null) {throw new NullPointerException("El usuario no puede ser nulo");}
             if (stateUser.getData() != State.SUCCESS) throw new IllegalArgumentException("El código no corresponde");
 
             //activa la cuenta (cambia el estado)
-            ResponseEntity<MessageDTO<State>> stateActivation = manageUserClient.activateAccount(idUser);
+            ResponseEntity<MessageDTO<State>> stateActivation = manageUserClient.activateAccount(messageDTO.getData().idUser());
             MessageDTO<State> stateActive = stateActivation.getBody();
             if (stateActive == null || stateActive.getData() == null) {throw new NullPointerException("El valor no puede ser nulo");}
             if (stateActive.getData() != State.SUCCESS){
@@ -193,15 +202,17 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public State forgotPassword(String emailAddress)  {
         try {
-
+            System.out.println(emailAddress);
             //Verificar si se ha enviado correctamente el correo electonico
             if (!StringUtils.hasText(emailAddress)) throw new IllegalArgumentException("error  ingrese un email");
             ResponseEntity<MessageDTO<ClientDTO>> user = manageUserClient.getUserByEmail(emailAddress);
             MessageDTO<ClientDTO> clientDTO = user.getBody();
+            System.out.println(clientDTO.getData());
             if (clientDTO == null || clientDTO.getData() == null) {throw new NullPointerException("no puede ser nulo");}
 
             //generar el codigo para recuperar contraseña
             String codeForgotPassword = activationCodeGenerator.generateActivationCode();
+            System.out.println(codeForgotPassword);
 
             //Enviar el codigo de verificación para ser guardado en la base de datos
             manageUserClient.saveCodeValidation(codeForgotPassword,clientDTO.getData().idUser());
