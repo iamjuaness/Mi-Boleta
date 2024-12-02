@@ -13,5 +13,6 @@ public interface AuthService {
      State forgotPassword (String emailAddress)throws Exception;
      State verifyForgotPassword (String code, String emailAddress)throws Exception;
      TokenDTO changePassword (ChangePasswordDTO changePasswordDTO)throws Exception;
+     State verifyToken(String token)throws Exception;
 }
 

@@ -353,4 +353,11 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    @Override
+    public State verifyToken(String token) throws Exception {
+        if (!StringUtils.hasText(token)) throw new IllegalArgumentException("por favor ingrese un token");
+
+        return null;
+    }
+
 }
