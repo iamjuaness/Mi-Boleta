@@ -1,22 +1,68 @@
-
-
 server:
   port: 8080
 
 spring:
   application:
     name: msvc-gateway
+  logging:
+    level:
+      root: INFO
+      org.springframework.cloud.gateway: DEBUG
+      org.springframework.web: DEBUG
+      org.springframework: DEBUG
   cloud:
+    loadbalancer:
+      ribbon:
+        enabled: true
     gateway:
       discovery:
         locator:
-          enable: true
+          enabled: true
       routes:
         - id: auth
-          uri: lb://msvc-auth
+          uri: lb://MSVC-AUTH
           predicates:
             - Path=/api/auth/**
 
+        - id: cart
+          uri: lb://MSVC-CART
+          predicates:
+            - Path=/api/cart/**
+
+        - id: event-locations
+          uri: lb://MSVC-MANAGE-EVENT
+          predicates:
+            - Path=/api/locations/**
+
+        - id: event-manage
+          uri: lb://MSVC-MANAGE-EVENT
+          predicates:
+            - Path=/api/manage-event/**
+
+        - id: event-public
+          uri: lb://MSVC-MANAGE-EVENT
+          predicates:
+            - Path=/api/public-event/**
+
+        - id: user-manage
+          uri: lb://MSVC-MANAGE_USER
+          predicates:
+            - Path=/api/manage-user/**
+
+        - id: user-public
+          uri: lb://MSVC-MANAGE_USER
+          predicates:
+            - Path=/api/request-user/**
+
+        - id: payments
+          uri: lb://MSVC-PAYS
+          predicates:
+            - Path=/payments/**
+
+        - id: shopping
+          uri: lb://MSVC-SHOPPING
+          predicates:
+            - Path=/shopping/**
 
 eureka:
   instance:

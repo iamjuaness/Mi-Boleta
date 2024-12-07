@@ -449,7 +449,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new NullPointerException("Usuario no encontrado"));
 
         // Obtener todos los eventos activos
-        List<Event> activeEvents = eventRepository.findByDateAfterAndStatusActive(LocalDateTime.now());
+        List<Event> activeEvents = eventRepository.findActiveEventsAfterDate(LocalDateTime.now());
 
         // Calcular puntuación para cada evento
         List<EventRecommendationDTO> recommendations = new ArrayList<>();

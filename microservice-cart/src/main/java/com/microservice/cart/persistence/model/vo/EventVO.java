@@ -31,6 +31,6 @@ public class EventVO {
 
     public BigDecimal calculateTotal() {
         return unitValue.multiply(BigDecimal.valueOf(quantity))
-                .setScale(2, RoundingMode.HALF_UP);
+                    .setScale(2, RoundingMode.HALF_UP);
     }
 }

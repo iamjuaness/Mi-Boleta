@@ -25,6 +25,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -102,9 +103,7 @@ class UserServiceTest {
         when(appUtil.checkEmail(registerClientDTO.emailAddress())).thenReturn(true);
 
         // Execute the method and verify that the exception is thrown
-        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
-            userService.signUp(registerClientDTO);
-        });
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> userService.signUp(registerClientDTO));
 
         assertEquals("Email pepe@gmail.com is already in use", thrown.getMessage());
     }
@@ -120,9 +119,7 @@ class UserServiceTest {
         when(appUtil.checkIdUser(registerClientDTO.idUser())).thenReturn(true);
 
         // Execute the method and verify that the exception is thrown
-        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> {
-            userService.signUp(registerClientDTO);
-        });
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> userService.signUp(registerClientDTO));
 
         assertEquals("IdUser 234 is already in use", thrown.getMessage());
     }
@@ -180,9 +177,7 @@ class UserServiceTest {
     @Test
     void testLoginThrowsIllegalArgumentExceptionWhenDTOIsNull() {
         // Execute the method and verify that an exception is thrown
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
-            userService.login(null);
-        });
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> userService.login(null));
 
         assertEquals("The login DTO and its fields cannot be null or empty.", thrown.getMessage());
     }
@@ -196,9 +191,7 @@ class UserServiceTest {
         when(userRepository.findByEmailAddress(loginClientDTO.emailAddress())).thenReturn(Optional.empty());
 
         // Execute the method and verify that an exception is thrown
-        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> {
-            userService.login(loginClientDTO);
-        });
+        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> userService.login(loginClientDTO));
 
         assertEquals("Invalid email or password", thrown.getMessage());
     }
@@ -209,9 +202,7 @@ class UserServiceTest {
         LoginClientDTO loginClientDTO = new LoginClientDTO("", "password123");
 
         // Execute the method and verify that an exception is thrown
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
-            userService.login(loginClientDTO);
-        });
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> userService.login(loginClientDTO));
 
         assertEquals("The login DTO and its fields cannot be null or empty.", thrown.getMessage());
     }
@@ -236,9 +227,7 @@ class UserServiceTest {
         when(passwordEncoder.matches(loginClientDTO.password(), user.getPassword())).thenReturn(false);
 
         // Execute the method and verify that an exception is thrown
-        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> {
-            userService.login(loginClientDTO);
-        });
+        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> userService.login(loginClientDTO));
 
         assertEquals("Invalid email or password", thrown.getMessage());
     }
@@ -249,9 +238,7 @@ class UserServiceTest {
         LoginClientDTO loginClientDTO = new LoginClientDTO("pepe@gmail.com", "");
 
         // Execute the method and verify that an exception is thrown
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
-            userService.login(loginClientDTO);
-        });
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> userService.login(loginClientDTO));
 
         assertEquals("The login DTO and its fields cannot be null or empty.", thrown.getMessage());
     }
@@ -295,9 +282,7 @@ class UserServiceTest {
         String userId = "123";
 
         // Execute the method and verify that an exception is thrown
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
-            userService.profileEdit(null, userId);
-        });
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> userService.profileEdit(null, userId));
 
         assertEquals("UpdateUserDTO cannot be null.", thrown.getMessage());
     }
@@ -312,9 +297,7 @@ class UserServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         // Execute the method and verify that an exception is thrown
-        ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> {
-            userService.profileEdit(updateUserDTO, userId);
-        });
+        ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> userService.profileEdit(updateUserDTO, userId));
 
         assertEquals("User not found", thrown.getMessage());
     }
@@ -367,19 +350,14 @@ class UserServiceTest {
     @Test
     void testGetUserThrowsIllegalArgumentExceptionWhenIdIsNullOrEmpty() {
         // Prepare test data
-        String nullId = null;
         String emptyId = "";
 
         // Verify that an exception is thrown for null ID
-        IllegalArgumentException thrownNull = assertThrows(IllegalArgumentException.class, () -> {
-            userService.getUser(nullId);
-        });
+        IllegalArgumentException thrownNull = assertThrows(IllegalArgumentException.class, () -> userService.getUser(null));
         assertEquals(ID_NULL, thrownNull.getMessage());
 
         // Verify that an exception is thrown for empty ID
-        IllegalArgumentException thrownEmpty = assertThrows(IllegalArgumentException.class, () -> {
-            userService.getUser(emptyId);
-        });
+        IllegalArgumentException thrownEmpty = assertThrows(IllegalArgumentException.class, () -> userService.getUser(emptyId));
         assertEquals(ID_NULL, thrownEmpty.getMessage());
     }
 
@@ -425,7 +403,7 @@ class UserServiceTest {
     @Test
     void testAddToCartSuccess() throws ErrorResponseException, ResourceNotFoundException {
         // Prepare test data
-        AddToCartDTO addToCartDTO = new AddToCartDTO(/* initialize fields */);
+        AddToCartDTO addToCartDTO = new AddToCartDTO("", "", "", BigDecimal.ZERO, 0);
         String userId = "123";
 
         // Create a mock UpdateResult
@@ -447,7 +425,7 @@ class UserServiceTest {
     @Test
     void testAddToCartThrowsResourceNotFoundExceptionWhenUserNotFound() throws ErrorResponseException {
         // Prepare test data
-        AddToCartDTO addToCartDTO = new AddToCartDTO(/* initialize fields */);
+        AddToCartDTO addToCartDTO = new AddToCartDTO("", "", "", BigDecimal.ZERO, 0);
         String userId = "123";
 
         // Create a mock UpdateResult
@@ -459,9 +437,7 @@ class UserServiceTest {
                 .thenReturn(updateResult);
 
         // Execute the method and verify that the exception is thrown
-        ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> {
-            userService.addToCart(addToCartDTO, userId);
-        });
+        ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> userService.addToCart(addToCartDTO, userId));
 
         assertEquals(NOT_FOUND, thrown.getMessage());
     }
@@ -469,7 +445,7 @@ class UserServiceTest {
     @Test
     void testAddToCartThrowsErrorResponseExceptionWhenAddFails() {
         // Prepare test data
-        AddToCartDTO addToCartDTO = new AddToCartDTO(/* initialize fields */);
+        AddToCartDTO addToCartDTO = new AddToCartDTO("", "", "", BigDecimal.ZERO, 0);
         String userId = "123";
 
         // Create a mock UpdateResult
@@ -482,9 +458,7 @@ class UserServiceTest {
                 .thenReturn(updateResult);
 
         // Execute the method and verify that the exception is thrown
-        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> {
-            userService.addToCart(addToCartDTO, userId);
-        });
+        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> userService.addToCart(addToCartDTO, userId));
 
         assertEquals("Failed to add to cart", thrown.getMessage());
     }
@@ -492,20 +466,15 @@ class UserServiceTest {
     @Test
     void testAddToCartThrowsIllegalArgumentExceptionWhenParametersAreNull() {
         // Prepare test data
-        AddToCartDTO addToCartDTO = null;
         String userId = "123";
 
         // Verify that an exception is thrown for null addToCartDTO
-        IllegalArgumentException thrownNullDTO = assertThrows(IllegalArgumentException.class, () -> {
-            userService.addToCart(addToCartDTO, userId);
-        });
+        IllegalArgumentException thrownNullDTO = assertThrows(IllegalArgumentException.class, () -> userService.addToCart(null, userId));
         assertEquals("parameter is null", thrownNullDTO.getMessage());
 
         // Verify that an exception is thrown for null id
-        AddToCartDTO validDTO = new AddToCartDTO(/* initialize fields */);
-        IllegalArgumentException thrownNullId = assertThrows(IllegalArgumentException.class, () -> {
-            userService.addToCart(validDTO, null);
-        });
+        AddToCartDTO validDTO = new AddToCartDTO("", "", "", BigDecimal.ZERO, 0);
+        IllegalArgumentException thrownNullId = assertThrows(IllegalArgumentException.class, () -> userService.addToCart(validDTO, null));
         assertEquals("parameter is null", thrownNullId.getMessage());
     }
 
@@ -548,9 +517,7 @@ class UserServiceTest {
                 .thenReturn(updateResult);
 
         // Execute the method and verify that the exception is thrown
-        ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> {
-            userService.deleteTicketsCart(userId, itemId);
-        });
+        ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> userService.deleteTicketsCart(userId, itemId));
 
         assertEquals("User not found", thrown.getMessage());
     }
@@ -571,9 +538,7 @@ class UserServiceTest {
                 .thenReturn(updateResult);
 
         // Execute the method and verify that the exception is thrown
-        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> {
-            userService.deleteTicketsCart(userId, itemId);
-        });
+        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> userService.deleteTicketsCart(userId, itemId));
 
         assertEquals("Failed to remove item from cart", thrown.getMessage());
     }
@@ -586,20 +551,13 @@ class UserServiceTest {
 
         // Verify that an exception is thrown for null itemId
         String finalUserId = userId;
-        String finalItemId = itemId;
-        IllegalArgumentException thrownNullItemId = assertThrows(IllegalArgumentException.class, () -> {
-            userService.deleteTicketsCart(finalUserId, finalItemId);
-        });
+        IllegalArgumentException thrownNullItemId = assertThrows(IllegalArgumentException.class, () -> userService.deleteTicketsCart(finalUserId, null));
         assertEquals("User ID and Item ID cannot be null or empty.", thrownNullItemId.getMessage());
 
         // Verify that an exception is thrown for null userId
-        userId = null;
         itemId = "456";
-        String finalUserId1 = userId;
         String finalItemId1 = itemId;
-        IllegalArgumentException thrownNullUserId = assertThrows(IllegalArgumentException.class, () -> {
-            userService.deleteTicketsCart(finalUserId1, finalItemId1);
-        });
+        IllegalArgumentException thrownNullUserId = assertThrows(IllegalArgumentException.class, () -> userService.deleteTicketsCart(null, finalItemId1));
         assertEquals("User ID and Item ID cannot be null or empty.", thrownNullUserId.getMessage());
     }
 
@@ -640,9 +598,7 @@ class UserServiceTest {
                 .thenReturn(updateResult);
 
         // Execute the method and verify that the exception is thrown
-        ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> {
-            userService.clearCart(userId);
-        });
+        ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> userService.clearCart(userId));
 
         assertEquals("User not found", thrown.getMessage());
     }
@@ -662,22 +618,15 @@ class UserServiceTest {
                 .thenReturn(updateResult);
 
         // Execute the method and verify that the exception is thrown
-        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> {
-            userService.clearCart(userId);
-        });
+        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> userService.clearCart(userId));
 
         assertEquals("Failed to clear the cart", thrown.getMessage());
     }
 
     @Test
     void testClearCartThrowsIllegalArgumentExceptionWhenUserIdIsNull() {
-        // Prepare test data
-        String userId = null;
-
         // Verify that an exception is thrown for null userId
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
-            userService.clearCart(userId);
-        });
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> userService.clearCart(null));
         assertEquals(ID_NULL, thrown.getMessage());
     }
 
@@ -771,7 +720,7 @@ class UserServiceTest {
     // Delete Account Test
 
     @Test
-    void testDeleteAccountSuccess() throws ErrorResponseException, ResourceNotFoundException {
+    void testDeleteAccountSuccess() throws ErrorResponseException {
         // Prepare test data
         String userId = "123";
 
@@ -805,9 +754,7 @@ class UserServiceTest {
                 .thenReturn(updateResult);
 
         // Execute the method and verify that the exception is thrown
-        ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> {
-            userService.deleteAccount(userId);
-        });
+        ResourceNotFoundException thrown = assertThrows(ResourceNotFoundException.class, () -> userService.deleteAccount(userId));
 
         assertEquals(NOT_FOUND, thrown.getMessage());
     }
@@ -827,22 +774,15 @@ class UserServiceTest {
                 .thenReturn(updateResult);
 
         // Execute the method and verify that the exception is thrown
-        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> {
-            userService.deleteAccount(userId);
-        });
+        ErrorResponseException thrown = assertThrows(ErrorResponseException.class, () -> userService.deleteAccount(userId));
 
         assertEquals("Failed to deactivate account", thrown.getMessage());
     }
 
     @Test
     void testDeleteAccountThrowsIllegalArgumentExceptionWhenUserIdIsNull() {
-        // Prepare test data
-        String userId = null;
-
         // Verify that an exception is thrown for null userId
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
-            userService.deleteAccount(userId);
-        });
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> userService.deleteAccount(null));
         assertEquals(ID_NULL, thrown.getMessage());
     }
 
@@ -852,9 +792,7 @@ class UserServiceTest {
         String userId = "";
 
         // Verify that an exception is thrown for empty userId
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
-            userService.deleteAccount(userId);
-        });
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> userService.deleteAccount(userId));
         assertEquals(ID_NULL, thrown.getMessage());
     }
 

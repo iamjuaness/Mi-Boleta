@@ -142,11 +142,6 @@
 			<artifactId>jackson-datatype-jsr310</artifactId>
 			<version>2.18.0</version>
 		</dependency>
-		<dependency>
-			<groupId>org.apache.mahout</groupId>
-			<artifactId>mahout-mr</artifactId>
-			<version>0.13.0</version>
-		</dependency>
         <dependency>
             <groupId>com.microservice.manage-user</groupId>
             <artifactId>microservice-manage-user</artifactId>
